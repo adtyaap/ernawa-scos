@@ -1,0 +1,118 @@
+// Tipe domain minimal, ditulis manual — BUKAN tipe hasil generate Supabase.
+// Ganti dengan `supabase gen types typescript` begitu project sudah
+// tersambung lewat Supabase CLI, supaya tetap sinkron dengan migrations/.
+
+export type Track = 'trading' | 'budidaya';
+
+export interface Site {
+  id: string;
+  name: string;
+  type: Track;
+}
+
+export interface Tank {
+  id: string;
+  site_id: string;
+  name: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  contact_person: string | null;
+  phone: string | null;
+  address: string | null;
+  status: 'aktif' | 'nonaktif';
+  created_at: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+}
+
+export type SettlementMode = 'cod' | 'term';
+
+export interface Customer {
+  id: string;
+  name: string;
+  settlement_mode: SettlementMode;
+  payment_term_days: number | null;
+}
+
+// Hasil RPC get_available_batch_lines(p_site_id) — migration 0008. Sudah
+// terurut FEFO (received_at asc) oleh function-nya sendiri, sudah difilter
+// ke satu site (parameter wajib, bukan filter opsional).
+export interface AvailableBatchLine {
+  batch_line_id: string;
+  tank_name: string;
+  product_id: string;
+  product_name: string;
+  balance_kg: number;
+  received_at: string | null;
+  max_holding_hours: number | null;
+  age_hours: number | null;
+  is_overdue: boolean;
+}
+
+// Hasil view v_deliveries_pending_settlement — migration 0009.
+export interface PendingSettlementDelivery {
+  delivery_id: string;
+  site_id: string;
+  site_name: string;
+  track: Track;
+  planned_kg: number;
+  actual_weight_kg: number;
+  delivered_at: string | null;
+  demand_id: string | null;
+  customer_id: string | null;
+  customer_name: string | null;
+  expected_price_per_kg: number | null;
+}
+
+// Hasil view v_settlements_aging — migration 0009.
+export interface SettlementAgingRow {
+  settlement_id: string;
+  delivery_id: string;
+  customer_id: string;
+  customer_name: string;
+  mode: SettlementMode;
+  amount: number;
+  due_date: string | null;
+  settled_at: string | null;
+  days_until_due: number | null;
+}
+
+// Hasil view v_trading_delivery_margin — migration 0011. Granularitas per
+// delivery. Sudah difilter site.type='trading' di dalam view.
+export interface TradingDeliveryMargin {
+  delivery_id: string;
+  site_id: string;
+  actual_weight_kg: number;
+  revenue: number;
+  cogs: number;
+  margin: number;
+  margin_per_kg: number | null;
+}
+
+// Hasil view v_trading_capital_lockup — migration 0011. Granularitas per
+// delivery_allocation (bukan per delivery — lihat catatan di migration).
+export interface TradingCapitalLockup {
+  delivery_allocation_id: string;
+  batch_line_id: string;
+  qty_kg: number;
+  delivered_at: string;
+  received_at: string;
+  lockup_days: number;
+}
+
+// Hasil view v_trading_receivable_cycle — migration 0011. Granularitas per
+// settlement, mode='term' yang sudah lunas.
+export interface TradingReceivableCycle {
+  settlement_id: string;
+  delivery_id: string;
+  created_at: string;
+  settled_at: string;
+  due_date: string | null;
+  days_to_collect: number;
+}
