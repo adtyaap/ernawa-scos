@@ -11,6 +11,8 @@ const inputClass =
 interface OpenDemandOption {
   id: string;
   requested_qty_kg: number;
+  remaining_kg: number;
+  status: string;
   customer: { name: string } | null;
   product: { name: string } | null;
 }
@@ -94,12 +96,25 @@ export function AlokasiKirimPage() {
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
 
   async function loadOpenDemands() {
-    const { data } = await supabase
-      .from('demands')
-      .select('id, requested_qty_kg, customer:customers(name), product:products(name)')
-      .eq('status', 'open')
-      .order('created_at', { ascending: false });
-    setOpenDemands((data as unknown as OpenDemandOption[]) ?? []);
+    // 'partial' (migration 0019) tetap bisa dialokasikan lagi; sisa qty dihitung
+    // di DB (v_demands_with_fulfillment) karena alokasi ter-scope per site.
+    const [{ data }, { data: fulfillmentData }] = await Promise.all([
+      supabase
+        .from('demands')
+        .select('id, requested_qty_kg, status, customer:customers(name), product:products(name)')
+        .in('status', ['open', 'partial'])
+        .order('created_at', { ascending: false }),
+      supabase.from('v_demands_with_fulfillment').select('demand_id, remaining_kg'),
+    ]);
+    const remaining = new Map(
+      ((fulfillmentData as { demand_id: string; remaining_kg: number }[] | null) ?? []).map((f) => [f.demand_id, Number(f.remaining_kg)]),
+    );
+    setOpenDemands(
+      ((data as unknown as Omit<OpenDemandOption, 'remaining_kg'>[]) ?? []).map((d) => ({
+        ...d,
+        remaining_kg: remaining.get(d.id) ?? d.requested_qty_kg,
+      })),
+    );
   }
 
   useEffect(() => {
@@ -277,7 +292,11 @@ export function AlokasiKirimPage() {
               <option value="">Spot sale (tanpa demand)</option>
               {openDemands.map((d) => (
                 <option key={d.id} value={d.id}>
-                  {d.customer?.name ?? '-'} — {d.product?.name ?? '-'} ({formatKg(d.requested_qty_kg)})
+                  {d.customer?.name ?? '-'} — {d.product?.name ?? '-'} (
+                  {d.status === 'partial'
+                    ? `sisa ${formatKg(d.remaining_kg)} dari ${formatKg(d.requested_qty_kg)}`
+                    : formatKg(d.requested_qty_kg)}
+                  )
                 </option>
               ))}
             </select>

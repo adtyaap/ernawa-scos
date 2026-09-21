@@ -54,7 +54,7 @@ export function HomePage() {
 
       const [stockResults, demandResult, deliveryResult] = await Promise.all([
         Promise.all(sites.map((site) => supabase.rpc('get_available_batch_lines', { p_site_id: site.id }))),
-        supabase.from('demands').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('demands').select('id', { count: 'exact', head: true }).in('status', ['open', 'partial']),
         supabase.from('deliveries').select('id', { count: 'exact', head: true }).is('actual_weight_kg', null),
       ]);
 
@@ -165,7 +165,7 @@ export function HomePage() {
           icon={ClipboardList}
           label="Demand Terbuka"
           value={openDemands === null ? '...' : formatNumber(openDemands)}
-          note="Belum dialokasikan"
+          note="Belum terpenuhi penuh"
         />
         <KPICard
           icon={Scale}

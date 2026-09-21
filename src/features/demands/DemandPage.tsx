@@ -13,11 +13,12 @@ const inputClass =
 
 type CustomerOption = Pick<Customer, 'id' | 'name'>;
 
-const DEMAND_STATUSES = ['open', 'allocated', 'fulfilled', 'cancelled'] as const;
+const DEMAND_STATUSES = ['open', 'partial', 'allocated', 'fulfilled', 'cancelled'] as const;
 type DemandStatus = (typeof DEMAND_STATUSES)[number];
 
 const STATUS_LABEL: Record<DemandStatus, string> = {
   open: 'Open',
+  partial: 'Sebagian',
   allocated: 'Allocated',
   fulfilled: 'Fulfilled',
   cancelled: 'Cancelled',
@@ -25,6 +26,7 @@ const STATUS_LABEL: Record<DemandStatus, string> = {
 
 const STATUS_TONE: Record<DemandStatus, BadgeTone> = {
   open: 'neutral',
+  partial: 'info',
   allocated: 'warning',
   fulfilled: 'success',
   cancelled: 'danger',
@@ -36,6 +38,7 @@ interface DemandRow {
   expected_price_per_kg: number | null;
   needed_by: string | null;
   status: string;
+  allocated_kg?: number;
   customer: { name: string } | null;
   product: { name: string } | null;
 }
@@ -90,15 +93,25 @@ export function DemandPage() {
     setLoading(true);
     setLoadError(null);
 
-    const { data, error } = await supabase
-      .from('demands')
-      .select('id, requested_qty_kg, expected_price_per_kg, needed_by, status, customer:customers(name), product:products(name)')
-      .order('created_at', { ascending: false });
+    const [{ data, error }, { data: fulfillmentData }] = await Promise.all([
+      supabase
+        .from('demands')
+        .select('id, requested_qty_kg, expected_price_per_kg, needed_by, status, customer:customers(name), product:products(name)')
+        .order('created_at', { ascending: false }),
+      // Total teralokasi dihitung di DB (v_demands_with_fulfillment, migration
+      // 0019) — demand global tapi alokasi ter-scope per site, jadi tidak
+      // boleh dijumlahkan di browser dari data yang terlihat user.
+      supabase.from('v_demands_with_fulfillment').select('demand_id, allocated_kg'),
+    ]);
 
     if (error) {
       setLoadError(error.message);
     } else {
-      setDemands((data as unknown as DemandRow[]) ?? []);
+      const allocated = new Map(
+        ((fulfillmentData as { demand_id: string; allocated_kg: number }[] | null) ?? []).map((f) => [f.demand_id, Number(f.allocated_kg)]),
+      );
+      const rows = ((data as unknown as DemandRow[]) ?? []).map((row) => ({ ...row, allocated_kg: allocated.get(row.id) }));
+      setDemands(rows);
     }
     setLoading(false);
   }
@@ -217,6 +230,14 @@ export function DemandPage() {
     { key: 'customer', header: 'Customer', render: (row) => row.customer?.name ?? '-' },
     { key: 'product', header: 'Produk', render: (row) => row.product?.name ?? '-' },
     { key: 'requested_qty_kg', header: 'Qty', render: (row) => formatKg(row.requested_qty_kg) },
+    {
+      key: 'allocated_kg',
+      header: 'Teralokasi',
+      render: (row) =>
+        row.allocated_kg === undefined
+          ? '-'
+          : `${formatKg(row.allocated_kg)}${row.allocated_kg < row.requested_qty_kg && row.allocated_kg > 0 ? ` (sisa ${formatKg(row.requested_qty_kg - row.allocated_kg)})` : ''}`,
+    },
     {
       key: 'expected_price_per_kg',
       header: 'Harga Ekspektasi',
