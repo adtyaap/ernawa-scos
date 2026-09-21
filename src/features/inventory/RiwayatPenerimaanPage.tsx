@@ -16,13 +16,17 @@ interface ReceivingRow {
   supplier: { name: string } | null;
   site: { name: string; type: Track } | null;
   creator: { full_name: string } | null;
-  lots: { qty_kg: number; buy_price_per_kg: number; product: { name: string } | null }[];
+  lots: { id: string; qty_kg: number; buy_price_per_kg: number; product: { name: string } | null }[];
 }
 
-function rowTotals(row: ReceivingRow) {
+// Total hanya menghitung lot yang MASIH berlaku: lot yang penerimaannya sudah
+// direversal lewat Koreksi Ledger tidak boleh ikut menggelembungkan total.
+function rowTotals(row: ReceivingRow, reversedLotIds: Set<string>) {
+  const active = row.lots.filter((lot) => !reversedLotIds.has(lot.id));
   return {
-    kg: row.lots.reduce((sum, lot) => sum + Number(lot.qty_kg), 0),
-    value: row.lots.reduce((sum, lot) => sum + Number(lot.qty_kg) * Number(lot.buy_price_per_kg), 0),
+    kg: active.reduce((sum, lot) => sum + Number(lot.qty_kg), 0),
+    value: active.reduce((sum, lot) => sum + Number(lot.qty_kg) * Number(lot.buy_price_per_kg), 0),
+    activeCount: active.length,
   };
 }
 
@@ -39,6 +43,7 @@ export function RiwayatPenerimaanPage() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
   const [rows, setRows] = useState<ReceivingRow[]>([]);
+  const [reversedLotIds, setReversedLotIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -59,7 +64,7 @@ export function RiwayatPenerimaanPage() {
       let query = supabase
         .from('receiving_transactions')
         .select(
-          'id, transaction_date, created_at, supplier:suppliers(name), site:sites(name, type), creator:users!receiving_transactions_created_by_fkey(full_name), lots:receiving_lots(qty_kg, buy_price_per_kg, product:products(name))',
+          'id, transaction_date, created_at, supplier:suppliers(name), site:sites(name, type), creator:users!receiving_transactions_created_by_fkey(full_name), lots:receiving_lots(id, qty_kg, buy_price_per_kg, product:products(name))',
         )
         .order('transaction_date', { ascending: false })
         .order('created_at', { ascending: false })
@@ -75,9 +80,40 @@ export function RiwayatPenerimaanPage() {
       if (queryError) {
         setError(queryError.message);
         setRows([]);
-      } else {
-        setRows((data as unknown as ReceivingRow[]) ?? []);
+        setReversedLotIds(new Set());
+        setLoading(false);
+        return;
       }
+
+      const loaded = (data as unknown as ReceivingRow[]) ?? [];
+      const lotIds = loaded.flatMap((row) => row.lots.map((lot) => lot.id));
+      const reversed = new Set<string>();
+
+      if (lotIds.length > 0) {
+        const { data: lineData } = await supabase.from('batch_lines').select('id, receiving_lot_id').in('receiving_lot_id', lotIds);
+        const lines = (lineData as { id: string; receiving_lot_id: string }[] | null) ?? [];
+
+        if (lines.length > 0) {
+          const { data: ledgerData } = await supabase
+            .from('inventory_ledger')
+            .select('id, batch_line_id, movement_type, reversal_of')
+            .in('batch_line_id', lines.map((line) => line.id));
+          const ledger =
+            (ledgerData as { id: string; batch_line_id: string; movement_type: string; reversal_of: string | null }[] | null) ?? [];
+
+          const reversedOriginalIds = new Set(ledger.filter((l) => l.reversal_of).map((l) => l.reversal_of as string));
+          const reversedLineIds = new Set(
+            ledger.filter((l) => l.movement_type === 'receive' && reversedOriginalIds.has(l.id)).map((l) => l.batch_line_id),
+          );
+          for (const line of lines) {
+            if (reversedLineIds.has(line.id)) reversed.add(line.receiving_lot_id);
+          }
+        }
+      }
+
+      if (!active) return;
+      setRows(loaded);
+      setReversedLotIds(reversed);
       setLoading(false);
     }
     load();
@@ -92,7 +128,8 @@ export function RiwayatPenerimaanPage() {
   };
   for (const row of rows) {
     if (!row.site) continue;
-    const totals = rowTotals(row);
+    const totals = rowTotals(row, reversedLotIds);
+    if (totals.activeCount === 0) continue;
     const bucket = perTrack[row.site.type];
     bucket.count += 1;
     bucket.kg += totals.kg;
@@ -122,16 +159,26 @@ export function RiwayatPenerimaanPage() {
       header: 'Produk',
       render: (row) => (
         <ul className="space-y-0.5 text-xs">
-          {row.lots.map((lot, index) => (
-            <li key={index}>
+          {row.lots.map((lot) => (
+            <li key={lot.id} className={reversedLotIds.has(lot.id) ? 'text-app-muted line-through' : undefined}>
               {lot.product?.name ?? '-'} · {formatKg(Number(lot.qty_kg))} · {formatCurrency(Number(lot.buy_price_per_kg))}/kg
             </li>
           ))}
         </ul>
       ),
     },
-    { key: 'kg', header: 'Total Qty', render: (row) => formatKg(rowTotals(row).kg) },
-    { key: 'value', header: 'Total Nilai', render: (row) => formatCurrency(rowTotals(row).value) },
+    { key: 'kg', header: 'Total Qty', render: (row) => formatKg(rowTotals(row, reversedLotIds).kg) },
+    { key: 'value', header: 'Total Nilai', render: (row) => formatCurrency(rowTotals(row, reversedLotIds).value) },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => {
+        const reversedCount = row.lots.filter((lot) => reversedLotIds.has(lot.id)).length;
+        if (reversedCount === 0) return <StatusBadge label="Berlaku" tone="success" />;
+        if (reversedCount === row.lots.length) return <StatusBadge label="Dikoreksi" tone="danger" />;
+        return <StatusBadge label="Sebagian dikoreksi" tone="warning" />;
+      },
+    },
     { key: 'creator', header: 'Dicatat oleh', render: (row) => row.creator?.full_name ?? '-' },
   ];
 
