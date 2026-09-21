@@ -11,6 +11,7 @@ import { InspeksiKualitasPage } from './features/inventory/InspeksiKualitasPage'
 import { RiwayatPenerimaanPage } from './features/inventory/RiwayatPenerimaanPage';
 import { RiwayatDeliveryPage } from './features/deliver/RiwayatDeliveryPage';
 import { KoreksiLedgerPage } from './features/inventory/KoreksiLedgerPage';
+import { GantiKatasandiPage } from './features/account/GantiKatasandiPage';
 import { ManajemenUserPage } from './features/admin/ManajemenUserPage';
 import { ComingSoonPage } from './components/shared/ComingSoonPage';
 import { DeliverPage } from './features/deliver/DeliverPage';
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/deliver/settlement" element={<SettlementPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/finance/piutang" element={<PiutangPage />} />
+            <Route path="/akun/katasandi" element={<GantiKatasandiPage />} />
             <Route path="/admin" element={<ComingSoonPage title="Admin" />} />
             <Route path="/admin/user" element={<ManajemenUserPage />} />
           </Routes>

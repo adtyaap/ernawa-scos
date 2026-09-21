@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
@@ -8,6 +8,11 @@ import type { AppUser, Site, UserRole } from '../../types/domain';
 
 const inputClass =
   'rounded-md border border-app-border bg-app-bg px-2 py-1 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
+
+const formInputClass =
+  'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
+
+const INVITABLE_ROLES: UserRole[] = ['lead_lapangan', 'staf_lapangan', 'investor'];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'Owner',
@@ -42,6 +47,53 @@ export function ManajemenUserPage() {
   const [savingId, setSavingId] = useState<string | null>(null);
   const [savingSiteKey, setSavingSiteKey] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
+
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteName, setInviteName] = useState('');
+  const [inviteRole, setInviteRole] = useState<UserRole>('staf_lapangan');
+  const [inviteSiteIds, setInviteSiteIds] = useState<string[]>([]);
+  const [inviting, setInviting] = useState(false);
+  const [inviteResult, setInviteResult] = useState<{ email: string; tempPassword: string } | null>(null);
+
+  // Akun dibuat oleh Edge Function invite-user (server-side, memakai
+  // service_role yang TIDAK ada di frontend — CLAUDE.md #5). Katasandi
+  // sementara hanya ditampilkan sekali di sini dan tidak disimpan di mana pun.
+  async function handleInvite(event: FormEvent) {
+    event.preventDefault();
+    if (inviting) return;
+
+    setInviting(true);
+    setFeedback(null);
+    setInviteResult(null);
+
+    const { data, error } = await supabase.functions.invoke('invite-user', {
+      body: { email: inviteEmail, full_name: inviteName, role: inviteRole, site_ids: inviteSiteIds },
+    });
+
+    setInviting(false);
+
+    if (error) {
+      // Untuk respons non-2xx, pesan yang berguna ada di body JSON.
+      let message = error.message;
+      const context = (error as { context?: Response }).context;
+      if (context && typeof context.json === 'function') {
+        try {
+          const body = await context.json();
+          if (body?.error) message = body.error;
+        } catch {
+          /* pakai pesan default */
+        }
+      }
+      setFeedback({ variant: 'danger', message });
+      return;
+    }
+
+    setInviteResult({ email: data.email, tempPassword: data.temp_password });
+    setInviteEmail('');
+    setInviteName('');
+    setInviteSiteIds([]);
+    await loadUsers();
+  }
 
   async function loadUsers() {
     setLoading(true);
@@ -225,6 +277,92 @@ export function ManajemenUserPage() {
           {loadError}
         </AlertBanner>
       )}
+
+      <form onSubmit={handleInvite} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+        <h2 className="text-sm font-semibold text-app-text">Tambah User Baru</h2>
+
+        {inviteResult && (
+          <AlertBanner variant="success" title="Akun berhasil dibuat">
+            <p>
+              Berikan ke <strong>{inviteResult.email}</strong> katasandi sementara ini. Katasandi hanya ditampilkan
+              sekali dan tidak bisa dilihat lagi. User harus menggantinya lewat Home &gt; Ganti Katasandi.
+            </p>
+            <p className="mt-1 select-all font-mono text-base font-semibold">{inviteResult.tempPassword}</p>
+          </AlertBanner>
+        )}
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-app-muted">Email *</span>
+            <input
+              id="invite-email"
+              type="email"
+              required
+              value={inviteEmail}
+              onChange={(e) => setInviteEmail(e.target.value)}
+              className={formInputClass}
+              placeholder="nama@contoh.com"
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-app-muted">Nama Lengkap *</span>
+            <input
+              id="invite-name"
+              type="text"
+              required
+              value={inviteName}
+              onChange={(e) => setInviteName(e.target.value)}
+              className={formInputClass}
+            />
+          </label>
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-app-muted">Role *</span>
+            <select
+              id="invite-role"
+              value={inviteRole}
+              onChange={(e) => setInviteRole(e.target.value as UserRole)}
+              className={formInputClass}
+            >
+              {INVITABLE_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {ROLE_LABELS[role]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        {(inviteRole === 'lead_lapangan' || inviteRole === 'staf_lapangan') && (
+          <fieldset className="space-y-1">
+            <legend className="text-xs font-medium text-app-muted">Ditugaskan ke site</legend>
+            <div className="flex flex-wrap gap-x-4 gap-y-1">
+              {sites.map((site) => (
+                <label key={site.id} className="flex items-center gap-1.5 text-sm text-app-text">
+                  <input
+                    type="checkbox"
+                    checked={inviteSiteIds.includes(site.id)}
+                    onChange={(e) =>
+                      setInviteSiteIds((prev) => (e.target.checked ? [...prev, site.id] : prev.filter((id) => id !== site.id)))
+                    }
+                  />
+                  {site.name}
+                </label>
+              ))}
+            </div>
+            {inviteSiteIds.length === 0 && (
+              <p className="text-xs text-app-muted">Tanpa site, user tidak akan melihat data apa pun sampai ditugaskan.</p>
+            )}
+          </fieldset>
+        )}
+
+        <button
+          type="submit"
+          disabled={inviting || !inviteEmail.trim() || !inviteName.trim()}
+          className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+        >
+          {inviting ? 'Membuat akun...' : 'Buat Akun'}
+        </button>
+      </form>
 
       <DataTable
         columns={columns}
