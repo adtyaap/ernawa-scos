@@ -6,6 +6,10 @@ import { HomePage } from './features/home/HomePage';
 import { SourcePage } from './features/source/SourcePage';
 import { InventoryIndexPage } from './features/inventory/InventoryIndexPage';
 import { TerimaCepatPage } from './features/inventory/TerimaCepatPage';
+import { StokMortalitasPage } from './features/inventory/StokMortalitasPage';
+import { InspeksiKualitasPage } from './features/inventory/InspeksiKualitasPage';
+import { ManajemenUserPage } from './features/admin/ManajemenUserPage';
+import { ComingSoonPage } from './components/shared/ComingSoonPage';
 import { DeliverPage } from './features/deliver/DeliverPage';
 import { CustomerPage } from './features/customers/CustomerPage';
 import { DemandPage } from './features/demands/DemandPage';
@@ -25,6 +29,8 @@ export default function App() {
             <Route path="/source" element={<SourcePage />} />
             <Route path="/inventory" element={<InventoryIndexPage />} />
             <Route path="/inventory/terima-cepat" element={<TerimaCepatPage />} />
+            <Route path="/inventory/stok" element={<StokMortalitasPage />} />
+            <Route path="/inventory/inspeksi-kualitas" element={<InspeksiKualitasPage />} />
             <Route path="/deliver" element={<DeliverPage />} />
             <Route path="/deliver/customer" element={<CustomerPage />} />
             <Route path="/deliver/demand-baru" element={<DemandPage />} />
@@ -33,6 +39,8 @@ export default function App() {
             <Route path="/deliver/settlement" element={<SettlementPage />} />
             <Route path="/finance" element={<FinancePage />} />
             <Route path="/finance/piutang" element={<PiutangPage />} />
+            <Route path="/admin" element={<ComingSoonPage title="Admin" />} />
+            <Route path="/admin/user" element={<ManajemenUserPage />} />
           </Routes>
         </AppShell>
       </RequireAuth>

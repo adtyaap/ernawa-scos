@@ -15,10 +15,11 @@ const inputClass =
 // SENGAJA DILEWATI — belum ada kebutuhan konkret soal struktur JSON-nya,
 // ini scope yang ditunda, bukan terlewat.
 //
-// Tidak ada policy DELETE untuk customers (sama seperti suppliers), tapi
-// beda dari Supplier Management: TIDAK ADA kolom status di customers dan
-// belum ada kebutuhan nonaktifkan customer, jadi tidak ada toggle apa pun
-// di sini — cuma Edit (owner-only, pola sama seperti Supplier Management).
+// Tidak ada policy DELETE untuk customers (sama seperti suppliers), jadi
+// status ('aktif'/'nonaktif', migration 0014) adalah pengganti resmi
+// fungsi hapus — pola sama seperti Supplier Management. Edit dan toggle
+// status owner-only (customers_update). Customer nonaktif tetap tampil di
+// daftar ini (riwayat utuh) tapi tidak muncul di dropdown halaman lain.
 export function CustomerPage() {
   const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
@@ -40,7 +41,7 @@ export function CustomerPage() {
 
     const { data, error } = await supabase
       .from('customers')
-      .select('id, name, settlement_mode, payment_term_days')
+      .select('id, name, settlement_mode, payment_term_days, status')
       .order('name');
 
     if (error) {
@@ -141,8 +142,31 @@ export function CustomerPage() {
     await loadCustomers();
   }
 
+  async function handleToggleStatus(customer: Customer) {
+    const nextStatus: Customer['status'] = customer.status === 'aktif' ? 'nonaktif' : 'aktif';
+    setFormFeedback(null);
+
+    const { error } = await supabase.from('customers').update({ status: nextStatus }).eq('id', customer.id);
+
+    if (error) {
+      setFormFeedback({ variant: 'danger', message: error.message });
+      return;
+    }
+
+    setFormFeedback({
+      variant: 'success',
+      message: `Customer "${customer.name}" berhasil di${nextStatus === 'nonaktif' ? 'nonaktifkan' : 'aktifkan'}.`,
+    });
+    await loadCustomers();
+  }
+
   const columns: DataTableColumn<Customer>[] = [
     { key: 'name', header: 'Nama' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <StatusBadge label={row.status === 'aktif' ? 'Aktif' : 'Nonaktif'} tone={row.status === 'aktif' ? 'success' : 'neutral'} />,
+    },
     {
       key: 'settlement_mode',
       header: 'Mode',
@@ -161,13 +185,20 @@ export function CustomerPage() {
             key: 'aksi',
             header: 'Aksi',
             render: (row: Customer) => (
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => startEdit(row)}
                   className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleStatus(row)}
+                  className="rounded px-2 py-1 text-xs font-medium text-app-muted hover:bg-white/5"
+                >
+                  {row.status === 'aktif' ? 'Nonaktifkan' : 'Aktifkan'}
                 </button>
               </div>
             ),

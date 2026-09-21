@@ -38,6 +38,16 @@ export interface Customer {
   name: string;
   settlement_mode: SettlementMode;
   payment_term_days: number | null;
+  status: 'aktif' | 'nonaktif';
+}
+
+export type UserRole = 'owner' | 'lead_lapangan' | 'staf_lapangan' | 'investor';
+
+export interface AppUser {
+  id: string;
+  full_name: string;
+  role: UserRole | null;
+  created_at: string;
 }
 
 // Hasil RPC get_available_batch_lines(p_site_id) — migration 0008. Sudah

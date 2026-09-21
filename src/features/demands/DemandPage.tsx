@@ -74,7 +74,7 @@ export function DemandPage() {
   useEffect(() => {
     async function loadMaster() {
       const [{ data: customerData }, { data: productData }] = await Promise.all([
-        supabase.from('customers').select('id, name').order('name'),
+        supabase.from('customers').select('id, name').eq('status', 'aktif').order('name'),
         supabase.from('products').select('id, name').order('name'),
       ]);
 

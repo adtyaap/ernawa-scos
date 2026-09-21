@@ -1,7 +1,7 @@
 // Konfigurasi tab atas + submenu sidebar. Tambah entri di sini saat halaman
 // baru menyusul — Sidebar & TabMenu murni data-driven dari config ini.
 
-export type TabKey = 'home' | 'source' | 'inventory' | 'deliver' | 'finance';
+export type TabKey = 'home' | 'source' | 'inventory' | 'deliver' | 'finance' | 'admin';
 
 export interface SubmenuItem {
   label: string;
@@ -13,6 +13,8 @@ export interface TabConfig {
   label: string;
   path: string;
   submenu: SubmenuItem[];
+  // Cuma menyembunyikan tab di navigasi; penjaga sesungguhnya tetap RLS di DB.
+  ownerOnly?: boolean;
 }
 
 export const NAV_TABS: TabConfig[] = [
@@ -22,7 +24,11 @@ export const NAV_TABS: TabConfig[] = [
     key: 'inventory',
     label: 'Inventory',
     path: '/inventory',
-    submenu: [{ label: 'Terima Cepat', path: '/inventory/terima-cepat' }],
+    submenu: [
+      { label: 'Terima Cepat', path: '/inventory/terima-cepat' },
+      { label: 'Stok & Mortalitas', path: '/inventory/stok' },
+      { label: 'Inspeksi Kualitas', path: '/inventory/inspeksi-kualitas' },
+    ],
   },
   {
     key: 'deliver',
@@ -46,5 +52,12 @@ export const NAV_TABS: TabConfig[] = [
     label: 'Finance',
     path: '/finance',
     submenu: [{ label: 'Piutang & Aging', path: '/finance/piutang' }],
+  },
+  {
+    key: 'admin',
+    label: 'Admin',
+    path: '/admin',
+    ownerOnly: true,
+    submenu: [{ label: 'Manajemen User', path: '/admin/user' }],
   },
 ];

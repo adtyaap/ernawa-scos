@@ -67,7 +67,7 @@ export function TerimaCepatPage() {
   useEffect(() => {
     async function loadMaster() {
       const [{ data: supplierData }, { data: siteData }, { data: productData }] = await Promise.all([
-        supabase.from('suppliers').select('id, name').order('name'),
+        supabase.from('suppliers').select('id, name').eq('status', 'aktif').order('name'),
         supabase.from('sites').select('id, name, type').order('name'),
         supabase.from('products').select('id, name').order('name'),
       ]);

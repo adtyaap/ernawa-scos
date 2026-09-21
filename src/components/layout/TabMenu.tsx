@@ -1,10 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { NAV_TABS } from '../../config/navigation';
+import { useAuth } from '../../lib/authContext';
 
 export function TabMenu() {
+  const { profile } = useAuth();
+  const visibleTabs = NAV_TABS.filter((tab) => !tab.ownerOnly || profile?.role === 'owner');
+
   return (
     <nav className="flex items-center gap-1">
-      {NAV_TABS.map((tab) => (
+      {visibleTabs.map((tab) => (
         <NavLink
           key={tab.key}
           to={tab.path}
