@@ -40,6 +40,8 @@ function statusOf(row: DeliveryRow): { label: string; tone: BadgeTone } {
   return { label: settlement.mode === 'term' ? 'Piutang berjalan' : 'Belum lunas', tone: 'danger' };
 }
 
+const PAGE_SIZE = 50;
+
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 }
@@ -52,6 +54,7 @@ export function RiwayatDeliveryPage() {
   const [siteId, setSiteId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const [rows, setRows] = useState<DeliveryRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +79,7 @@ export function RiwayatDeliveryPage() {
           'id, created_at, planned_kg, actual_weight_kg, delivered_at, site:sites(name, type), demand:demands(customer:customers(name), product:products(name)), allocations:delivery_allocations(override_reason), settlements(mode, amount, settled_at)',
         )
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (siteId) query = query.eq('site_id', siteId);
       if (dateFrom) query = query.gte('created_at', localDayStartISO(dateFrom));
@@ -97,6 +100,10 @@ export function RiwayatDeliveryPage() {
     return () => {
       active = false;
     };
+  }, [siteId, dateFrom, dateTo, limit]);
+
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
   }, [siteId, dateFrom, dateTo]);
 
   const perTrack: Record<Track, { count: number; plannedKg: number; actualKg: number }> = {
@@ -168,7 +175,7 @@ export function RiwayatDeliveryPage() {
       <div>
         <h1 className="text-xl font-semibold text-app-text">Deliver &gt; Riwayat Delivery</h1>
         <p className="text-sm text-app-muted">
-          Status setiap delivery dari alokasi sampai lunas. Menampilkan maksimal 100 delivery terbaru.
+          Status setiap delivery dari alokasi sampai lunas, terbaru di atas.
         </p>
       </div>
 
@@ -221,6 +228,21 @@ export function RiwayatDeliveryPage() {
         getRowId={(row) => row.id}
         emptyLabel={loading ? 'Memuat...' : 'Tidak ada delivery untuk filter ini.'}
       />
+
+      {rows.length >= limit && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setLimit(limit + PAGE_SIZE)}
+            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+          >
+            Muat lebih banyak
+          </button>
+          <span className="text-xs text-app-muted">
+            Ringkasan per track hanya menghitung {rows.length} delivery yang sudah dimuat.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

@@ -27,6 +27,8 @@ interface MortalityHistoryRow {
   } | null;
 }
 
+const HISTORY_PAGE = 20;
+
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 }
@@ -50,6 +52,7 @@ export function StokMortalitasPage() {
   const [linesError, setLinesError] = useState<string | null>(null);
   const [history, setHistory] = useState<MortalityHistoryRow[]>([]);
   const [reversedLedgerIds, setReversedLedgerIds] = useState<Set<string>>(new Set());
+  const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
 
   const [drafts, setDrafts] = useState<Record<string, MortalityDraft>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -63,7 +66,10 @@ export function StokMortalitasPage() {
       .then(({ data }) => setSites((data as Site[]) ?? []));
   }, []);
 
-  async function loadSite(siteId: string) {
+  // Filter site dilakukan di server (inner join), bukan disaring di browser
+  // dari N baris global — supaya riwayat site yang sepi tidak hilang hanya
+  // karena site lain lebih ramai.
+  async function loadSite(siteId: string, limit: number = historyLimit) {
     if (!siteId) {
       setLines([]);
       setHistory([]);
@@ -77,10 +83,11 @@ export function StokMortalitasPage() {
       supabase
         .from('mortality_events')
         .select(
-          'id, event_at, qty_kg, cause, inventory_ledger_id, batch_line:batch_lines(batch:batches(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
+          'id, event_at, qty_kg, cause, inventory_ledger_id, batch_line:batch_lines!inner(batch:batches!inner(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
         )
+        .eq('batch_line.batch.site_id', siteId)
         .order('event_at', { ascending: false })
-        .limit(50),
+        .limit(limit),
     ]);
 
     if (error) {
@@ -90,8 +97,7 @@ export function StokMortalitasPage() {
       setLines((data as AvailableBatchLine[]) ?? []);
     }
 
-    const allHistory = (historyData as unknown as MortalityHistoryRow[]) ?? [];
-    const siteHistory = allHistory.filter((row) => row.batch_line?.batch?.site_id === siteId).slice(0, 20);
+    const siteHistory = (historyData as unknown as MortalityHistoryRow[]) ?? [];
     setHistory(siteHistory);
 
     const ledgerIds = siteHistory.map((row) => row.inventory_ledger_id).filter((id): id is string => Boolean(id));
@@ -107,7 +113,8 @@ export function StokMortalitasPage() {
   useEffect(() => {
     setDrafts({});
     setFeedback(null);
-    loadSite(selectedSiteId);
+    setHistoryLimit(HISTORY_PAGE);
+    loadSite(selectedSiteId, HISTORY_PAGE);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
 
@@ -290,8 +297,21 @@ export function StokMortalitasPage() {
 
       {selectedSiteId && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-app-text">Riwayat Mortalitas (20 terakhir di site ini)</h2>
+          <h2 className="text-sm font-semibold text-app-text">Riwayat Mortalitas (terbaru di site ini)</h2>
           <DataTable columns={historyColumns} rows={history} getRowId={(row) => row.id} emptyLabel="Belum ada mortalitas." />
+          {history.length >= historyLimit && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = historyLimit + HISTORY_PAGE;
+                setHistoryLimit(next);
+                loadSite(selectedSiteId, next);
+              }}
+              className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+            >
+              Muat lebih banyak
+            </button>
+          )}
         </div>
       )}
     </div>

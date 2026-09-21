@@ -30,6 +30,8 @@ function rowTotals(row: ReceivingRow, reversedLotIds: Set<string>) {
   };
 }
 
+const PAGE_SIZE = 50;
+
 function formatDate(value: string): string {
   return new Date(`${value}T00:00:00`).toLocaleDateString('id-ID', { dateStyle: 'medium' });
 }
@@ -42,6 +44,7 @@ export function RiwayatPenerimaanPage() {
   const [siteId, setSiteId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+  const [limit, setLimit] = useState(PAGE_SIZE);
   const [rows, setRows] = useState<ReceivingRow[]>([]);
   const [reversedLotIds, setReversedLotIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -68,7 +71,7 @@ export function RiwayatPenerimaanPage() {
         )
         .order('transaction_date', { ascending: false })
         .order('created_at', { ascending: false })
-        .limit(100);
+        .limit(limit);
 
       if (siteId) query = query.eq('site_id', siteId);
       if (dateFrom) query = query.gte('transaction_date', dateFrom);
@@ -120,6 +123,10 @@ export function RiwayatPenerimaanPage() {
     return () => {
       active = false;
     };
+  }, [siteId, dateFrom, dateTo, limit]);
+
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
   }, [siteId, dateFrom, dateTo]);
 
   const perTrack: Record<Track, { count: number; kg: number; value: number }> = {
@@ -186,7 +193,7 @@ export function RiwayatPenerimaanPage() {
     <div className="max-w-6xl space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-app-text">Inventory &gt; Riwayat Penerimaan</h1>
-        <p className="text-sm text-app-muted">Daftar penerimaan dari supplier. Menampilkan maksimal 100 transaksi terbaru.</p>
+        <p className="text-sm text-app-muted">Daftar penerimaan dari supplier, terbaru di atas.</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-3">
@@ -238,6 +245,21 @@ export function RiwayatPenerimaanPage() {
         getRowId={(row) => row.id}
         emptyLabel={loading ? 'Memuat...' : 'Tidak ada penerimaan untuk filter ini.'}
       />
+
+      {rows.length >= limit && (
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setLimit(limit + PAGE_SIZE)}
+            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+          >
+            Muat lebih banyak
+          </button>
+          <span className="text-xs text-app-muted">
+            Ringkasan per track hanya menghitung {rows.length} transaksi yang sudah dimuat.
+          </span>
+        </div>
+      )}
     </div>
   );
 }

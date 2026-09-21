@@ -23,6 +23,8 @@ interface InspectionRow {
   batch: { business_date: string; site_id: string; tank: { name: string } | null } | null;
 }
 
+const HISTORY_PAGE = 20;
+
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
 }
@@ -43,6 +45,7 @@ export function InspeksiKualitasPage() {
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [batches, setBatches] = useState<BatchOption[]>([]);
   const [history, setHistory] = useState<InspectionRow[]>([]);
+  const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -60,7 +63,9 @@ export function InspeksiKualitasPage() {
       .then(({ data }) => setSites((data as Site[]) ?? []));
   }, []);
 
-  async function loadSite(siteId: string) {
+  // Filter site di server (inner join), bukan disaring di browser dari
+  // N baris global.
+  async function loadSite(siteId: string, limit: number = historyLimit) {
     if (!siteId) {
       setBatches([]);
       setHistory([]);
@@ -78,9 +83,10 @@ export function InspeksiKualitasPage() {
         .limit(50),
       supabase
         .from('quality_inspections')
-        .select('id, inspected_at, grade, notes, batch:batches(business_date, site_id, tank:tanks(name))')
+        .select('id, inspected_at, grade, notes, batch:batches!inner(business_date, site_id, tank:tanks(name))')
+        .eq('batch.site_id', siteId)
         .order('inspected_at', { ascending: false })
-        .limit(50),
+        .limit(limit),
     ]);
 
     if (batchError) {
@@ -90,15 +96,16 @@ export function InspeksiKualitasPage() {
       setBatches((batchData as unknown as BatchOption[]) ?? []);
     }
 
-    const allHistory = (historyData as unknown as InspectionRow[]) ?? [];
-    setHistory(allHistory.filter((row) => row.batch?.site_id === siteId).slice(0, 20));
+    setHistory((historyData as unknown as InspectionRow[]) ?? []);
     setLoading(false);
   }
 
   useEffect(() => {
     setBatchId('');
     setFeedback(null);
-    loadSite(selectedSiteId);
+    setHistoryLimit(HISTORY_PAGE);
+    loadSite(selectedSiteId, HISTORY_PAGE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId);
@@ -228,8 +235,21 @@ export function InspeksiKualitasPage() {
 
       {selectedSiteId && (
         <div className="space-y-2">
-          <h2 className="text-sm font-semibold text-app-text">Riwayat Inspeksi (20 terakhir di site ini)</h2>
+          <h2 className="text-sm font-semibold text-app-text">Riwayat Inspeksi (terbaru di site ini)</h2>
           <DataTable columns={columns} rows={history} getRowId={(row) => row.id} emptyLabel="Belum ada inspeksi." />
+          {history.length >= historyLimit && (
+            <button
+              type="button"
+              onClick={() => {
+                const next = historyLimit + HISTORY_PAGE;
+                setHistoryLimit(next);
+                loadSite(selectedSiteId, next);
+              }}
+              className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+            >
+              Muat lebih banyak
+            </button>
+          )}
         </div>
       )}
     </div>

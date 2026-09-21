@@ -34,6 +34,7 @@ const MOVEMENT_LABELS: Record<string, string> = {
 };
 
 const REVERSIBLE = new Set(['receive', 'mortality']);
+const ROW_PAGE = 50;
 
 function formatDateTime(value: string): string {
   return new Date(value).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' });
@@ -53,6 +54,7 @@ export function KoreksiLedgerPage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [rows, setRows] = useState<LedgerRow[]>([]);
+  const [rowLimit, setRowLimit] = useState(ROW_PAGE);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -69,7 +71,10 @@ export function KoreksiLedgerPage() {
       .then(({ data }) => setSites((data as Site[]) ?? []));
   }, []);
 
-  async function loadLedger(siteId: string) {
+  // Filter site di server (inner join). Urutan created_at desc menjamin baris
+  // reversal (lebih baru) selalu ikut termuat bersama baris aslinya, jadi
+  // penanda "Dikoreksi" tidak pernah salah karena batas baris.
+  async function loadLedger(siteId: string, limit: number = rowLimit) {
     if (!siteId) {
       setRows([]);
       return;
@@ -80,17 +85,17 @@ export function KoreksiLedgerPage() {
     const { data, error } = await supabase
       .from('inventory_ledger')
       .select(
-        'id, movement_type, qty_kg, event_at, created_at, reversal_of, batch_line:batch_lines(batch:batches(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
+        'id, movement_type, qty_kg, event_at, created_at, reversal_of, batch_line:batch_lines!inner(batch:batches!inner(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
       )
+      .eq('batch_line.batch.site_id', siteId)
       .order('created_at', { ascending: false })
-      .limit(200);
+      .limit(limit);
 
     if (error) {
       setLoadError(error.message);
       setRows([]);
     } else {
-      const all = (data as unknown as LedgerRow[]) ?? [];
-      setRows(all.filter((row) => row.batch_line?.batch?.site_id === siteId).slice(0, 50));
+      setRows((data as unknown as LedgerRow[]) ?? []);
     }
     setLoading(false);
   }
@@ -99,7 +104,9 @@ export function KoreksiLedgerPage() {
     setCorrectingId(null);
     setReason('');
     setFeedback(null);
-    loadLedger(selectedSiteId);
+    setRowLimit(ROW_PAGE);
+    loadLedger(selectedSiteId, ROW_PAGE);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
 
   const reversedIds = new Set(rows.filter((row) => row.reversal_of).map((row) => row.reversal_of as string));
@@ -260,6 +267,20 @@ export function KoreksiLedgerPage() {
             );
           })}
         </div>
+
+        {selectedSiteId && rows.length >= rowLimit && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = rowLimit + ROW_PAGE;
+              setRowLimit(next);
+              loadLedger(selectedSiteId, next);
+            }}
+            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+          >
+            Muat lebih banyak
+          </button>
+        )}
       </div>
     </div>
   );
