@@ -4,7 +4,13 @@ import { useAuth } from '../../lib/authContext';
 
 export function TabMenu() {
   const { profile } = useAuth();
-  const visibleTabs = NAV_TABS.filter((tab) => !tab.ownerOnly || profile?.role === 'owner');
+  // Investor hanya punya akses data Finance (migration 0022): tab lain
+  // disembunyikan supaya tidak menampilkan halaman kosong. Penjaga sesungguhnya
+  // tetap RLS di DB.
+  const visibleTabs =
+    profile?.role === 'investor'
+      ? NAV_TABS.filter((tab) => tab.key === 'finance')
+      : NAV_TABS.filter((tab) => !tab.ownerOnly || profile?.role === 'owner');
 
   return (
     <nav className="flex items-center gap-1">

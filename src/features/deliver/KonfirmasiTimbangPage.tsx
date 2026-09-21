@@ -54,6 +54,7 @@ export function KonfirmasiTimbangPage() {
         'id, planned_kg, demand_id, site:sites(name, type), demand:demands(customer:customers(name), product:products(name))',
       )
       .is('actual_weight_kg', null)
+      .is('cancelled_at', null)
       .order('created_at', { ascending: true });
 
     if (error) {

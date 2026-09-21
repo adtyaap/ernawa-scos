@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { AlertBanner } from '../../components/shared/AlertBanner';
+import { useAuth } from '../../lib/authContext';
+import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge, type BadgeTone } from '../../components/shared/StatusBadge';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
 import { formatCurrency, formatKg, localDayEndISO, localDayStartISO } from '../../lib/format';
@@ -21,6 +22,8 @@ interface DeliveryRow {
   planned_kg: number;
   actual_weight_kg: number | null;
   delivered_at: string | null;
+  cancelled_at: string | null;
+  cancel_reason: string | null;
   site: { name: string; type: Track } | null;
   demand: { customer: { name: string } | null; product: { name: string } | null } | null;
   allocations: { override_reason: string | null }[];
@@ -33,6 +36,7 @@ function firstSettlement(row: DeliveryRow): SettlementInfo | null {
 }
 
 function statusOf(row: DeliveryRow): { label: string; tone: BadgeTone } {
+  if (row.cancelled_at) return { label: 'Dibatalkan', tone: 'neutral' };
   if (row.actual_weight_kg === null) return { label: 'Menunggu timbang', tone: 'warning' };
   const settlement = firstSettlement(row);
   if (!settlement) return { label: 'Menunggu settlement', tone: 'info' };
@@ -50,6 +54,14 @@ function formatDateTime(value: string): string {
 // TRACK saja (CLAUDE.md #1). Nilai uang hanya ditampilkan per baris
 // settlement; tidak ada total rupiah gabungan di halaman ini.
 export function RiwayatDeliveryPage() {
+  const { profile } = useAuth();
+  const isOwner = profile?.role === 'owner';
+
+  const [reloadKey, setReloadKey] = useState(0);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const [sites, setSites] = useState<Site[]>([]);
   const [siteId, setSiteId] = useState('');
   const [dateFrom, setDateFrom] = useState('');
@@ -76,7 +88,7 @@ export function RiwayatDeliveryPage() {
       let query = supabase
         .from('deliveries')
         .select(
-          'id, created_at, planned_kg, actual_weight_kg, delivered_at, site:sites(name, type), demand:demands(customer:customers(name), product:products(name)), allocations:delivery_allocations(override_reason), settlements(mode, amount, settled_at)',
+          'id, created_at, planned_kg, actual_weight_kg, delivered_at, cancelled_at, cancel_reason, site:sites(name, type), demand:demands(customer:customers(name), product:products(name)), allocations:delivery_allocations(override_reason), settlements(mode, amount, settled_at)',
         )
         .order('created_at', { ascending: false })
         .limit(limit);
@@ -100,18 +112,44 @@ export function RiwayatDeliveryPage() {
     return () => {
       active = false;
     };
-  }, [siteId, dateFrom, dateTo, limit]);
+  }, [siteId, dateFrom, dateTo, limit, reloadKey]);
 
   useEffect(() => {
     setLimit(PAGE_SIZE);
   }, [siteId, dateFrom, dateTo]);
+
+  // Pembatalan lewat RPC cancel_delivery (migration 0020): atomik — membalik
+  // semua ledger alokasi lewat baris reversal, menandai batal, menghitung ulang
+  // status demand, dan mencatat audit. Owner-only (dicek juga di DB).
+  async function handleCancel(row: DeliveryRow) {
+    if (!cancelReason.trim() || cancelSubmitting) return;
+    setCancelSubmitting(true);
+    setFeedback(null);
+
+    const { error: rpcError } = await supabase.rpc('cancel_delivery', {
+      p_delivery_id: row.id,
+      p_reason: cancelReason.trim(),
+    });
+
+    setCancelSubmitting(false);
+
+    if (rpcError) {
+      setFeedback({ variant: 'danger', message: rpcError.message });
+      return;
+    }
+
+    setFeedback({ variant: 'success', message: 'Delivery dibatalkan dan stok dikembalikan lewat baris reversal.' });
+    setCancelingId(null);
+    setCancelReason('');
+    setReloadKey((key) => key + 1);
+  }
 
   const perTrack: Record<Track, { count: number; plannedKg: number; actualKg: number }> = {
     trading: { count: 0, plannedKg: 0, actualKg: 0 },
     budidaya: { count: 0, plannedKg: 0, actualKg: 0 },
   };
   for (const row of rows) {
-    if (!row.site) continue;
+    if (!row.site || row.cancelled_at) continue;
     const bucket = perTrack[row.site.type];
     bucket.count += 1;
     bucket.plannedKg += Number(row.planned_kg);
@@ -164,10 +202,65 @@ export function RiwayatDeliveryPage() {
           <div className="flex flex-wrap gap-1">
             <StatusBadge label={status.label} tone={status.tone} />
             {hasOverride && <StatusBadge label="Override FEFO" tone="warning" />}
+            {row.cancel_reason && <span className="w-full text-xs text-app-muted">Alasan: {row.cancel_reason}</span>}
           </div>
         );
       },
     },
+    ...(isOwner
+      ? [
+          {
+            key: 'aksi',
+            header: 'Aksi',
+            render: (row: DeliveryRow) => {
+              if (row.cancelled_at || firstSettlement(row)) return <span className="text-xs text-app-muted">-</span>;
+              if (cancelingId !== row.id) {
+                return (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCancelingId(row.id);
+                      setCancelReason('');
+                      setFeedback(null);
+                    }}
+                    className="rounded px-2 py-1 text-xs font-medium text-app-danger hover:bg-app-danger/10"
+                  >
+                    Batalkan
+                  </button>
+                );
+              }
+              return (
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={cancelReason}
+                    onChange={(e) => setCancelReason(e.target.value)}
+                    placeholder="Alasan pembatalan (wajib)"
+                    className={inputClass}
+                  />
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleCancel(row)}
+                      disabled={!cancelReason.trim() || cancelSubmitting}
+                      className="rounded bg-app-danger px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                    >
+                      {cancelSubmitting ? 'Membatalkan...' : 'Konfirmasi Batal'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCancelingId(null)}
+                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-white/5"
+                    >
+                      Tutup
+                    </button>
+                  </div>
+                </div>
+              );
+            },
+          },
+        ]
+      : []),
   ];
 
   return (
@@ -200,6 +293,12 @@ export function RiwayatDeliveryPage() {
           <input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} className={inputClass} />
         </label>
       </div>
+
+      {feedback && (
+        <AlertBanner variant={feedback.variant} title={feedback.variant === 'success' ? 'Berhasil' : 'Pembatalan ditolak'}>
+          {feedback.message}
+        </AlertBanner>
+      )}
 
       {error && (
         <AlertBanner variant="danger" title="Gagal memuat riwayat">

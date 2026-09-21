@@ -33,7 +33,7 @@ const MOVEMENT_LABELS: Record<string, string> = {
   adjustment: 'Koreksi',
 };
 
-const REVERSIBLE = new Set(['receive', 'mortality']);
+const REVERSIBLE = new Set(['receive', 'mortality', 'shrinkage', 'reject']);
 const ROW_PAGE = 50;
 
 function formatDateTime(value: string): string {

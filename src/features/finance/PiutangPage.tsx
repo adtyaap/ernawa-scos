@@ -15,8 +15,9 @@ import type { SettlementAgingRow } from '../../types/domain';
 // Tombol "Tandai Lunas" HANYA untuk owner (RLS settlements UPDATE = owner-
 // only, tanpa pengecualian kolom apa pun, beda dari demands/deliveries).
 export function PiutangPage() {
-  const { profile } = useAuth();
+  const { profile, profileLoading } = useAuth();
   const isOwner = profile?.role === 'owner';
+  const isInvestor = profile?.role === 'investor';
 
   const [rows, setRows] = useState<SettlementAgingRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -29,11 +30,10 @@ export function PiutangPage() {
     setLoading(true);
     setLoadError(null);
 
-    const { data, error } = await supabase
-      .from('v_settlements_aging')
-      .select('*')
-      .is('settled_at', null)
-      .order('days_until_due', { ascending: true });
+    // Investor membaca lewat fungsi SECURITY DEFINER (migration 0022); role
+    // lain membaca view langsung (security_invoker, ter-scope RLS mereka).
+    const source = isInvestor ? supabase.rpc('investor_settlements_aging') : supabase.from('v_settlements_aging').select('*');
+    const { data, error } = await source.is('settled_at', null).order('days_until_due', { ascending: true });
 
     if (error) {
       setLoadError(error.message);
@@ -44,8 +44,10 @@ export function PiutangPage() {
   }
 
   useEffect(() => {
+    if (profileLoading) return;
     loadAging();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileLoading, isInvestor]);
 
   async function handleMarkPaid(row: SettlementAgingRow) {
     if (markingId) return;

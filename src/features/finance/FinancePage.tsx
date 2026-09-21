@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Clock, Percent, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../lib/authContext';
 import { AlertBanner } from '../../components/shared/AlertBanner';
 import { KPICard } from '../../components/shared/KPICard';
 import { formatCurrency, formatNumber } from '../../lib/format';
@@ -27,6 +28,9 @@ function formatDays(value: number): string {
 //   - Hari piutang riil: rata-rata settled_at - created_at (BUKAN due_date),
 //     dari v_trading_receivable_cycle (per settlement term yang lunas).
 export function FinancePage() {
+  const { profile, profileLoading } = useAuth();
+  const isInvestor = profile?.role === 'investor';
+
   const [marginRows, setMarginRows] = useState<TradingDeliveryMargin[]>([]);
   const [lockupRows, setLockupRows] = useState<TradingCapitalLockup[]>([]);
   const [receivableRows, setReceivableRows] = useState<TradingReceivableCycle[]>([]);
@@ -34,12 +38,25 @@ export function FinancePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (profileLoading) return;
+
     async function load() {
-      const [marginRes, lockupRes, receivableRes] = await Promise.all([
-        supabase.from('v_trading_delivery_margin').select('*'),
-        supabase.from('v_trading_capital_lockup').select('*'),
-        supabase.from('v_trading_receivable_cycle').select('*'),
-      ]);
+      // Investor TIDAK boleh membaca view/tabel mentah (RLS sengaja menolak);
+      // ia membaca baris view yang sama lewat fungsi SECURITY DEFINER
+      // khusus (migration 0022) yang hanya melayani owner/investor.
+      const [marginRes, lockupRes, receivableRes] = await Promise.all(
+        isInvestor
+          ? [
+              supabase.rpc('investor_trading_delivery_margin'),
+              supabase.rpc('investor_trading_capital_lockup'),
+              supabase.rpc('investor_trading_receivable_cycle'),
+            ]
+          : [
+              supabase.from('v_trading_delivery_margin').select('*'),
+              supabase.from('v_trading_capital_lockup').select('*'),
+              supabase.from('v_trading_receivable_cycle').select('*'),
+            ],
+      );
 
       const firstError = marginRes.error ?? lockupRes.error ?? receivableRes.error;
       if (firstError) {
@@ -53,7 +70,7 @@ export function FinancePage() {
     }
 
     load();
-  }, []);
+  }, [profileLoading, isInvestor]);
 
   const marginPerKg = useMemo(() => {
     const validRows = marginRows.filter((r) => r.actual_weight_kg > 0);

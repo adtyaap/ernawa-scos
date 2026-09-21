@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { AlertTriangle, Boxes, ClipboardList, Scale } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../lib/authContext';
 import { KPICard } from '../../components/shared/KPICard';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
 import { AlertBanner } from '../../components/shared/AlertBanner';
@@ -32,6 +34,14 @@ const TRACKS: { key: Track; label: string }[] = [
 // tidak menampilkan nilai uang (piutang/margin): itu tugas halaman Finance
 // yang sudah memisahkan track secara eksplisit.
 export function HomePage() {
+  const { profile } = useAuth();
+  // Investor hanya punya akses Finance (migration 0022); dashboard operasional
+  // ini akan kosong untuk mereka, jadi langsung diarahkan ke Finance.
+  if (profile?.role === 'investor') return <Navigate to="/finance" replace />;
+  return <HomeDashboard />;
+}
+
+function HomeDashboard() {
   const [rows, setRows] = useState<SiteStockRow[]>([]);
   const [openDemands, setOpenDemands] = useState<number | null>(null);
   const [awaitingWeigh, setAwaitingWeigh] = useState<number | null>(null);
@@ -55,7 +65,11 @@ export function HomePage() {
       const [stockResults, demandResult, deliveryResult] = await Promise.all([
         Promise.all(sites.map((site) => supabase.rpc('get_available_batch_lines', { p_site_id: site.id }))),
         supabase.from('demands').select('id', { count: 'exact', head: true }).in('status', ['open', 'partial']),
-        supabase.from('deliveries').select('id', { count: 'exact', head: true }).is('actual_weight_kg', null),
+        supabase
+          .from('deliveries')
+          .select('id', { count: 'exact', head: true })
+          .is('actual_weight_kg', null)
+          .is('cancelled_at', null),
       ]);
 
       if (!active) return;

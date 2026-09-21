@@ -10,9 +10,33 @@ import type { AvailableBatchLine, Site } from '../../types/domain';
 const inputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
 
+type LossKind = 'mortality' | 'shrinkage' | 'reject';
+
+const KIND_LABEL: Record<LossKind, string> = {
+  mortality: 'Mortalitas',
+  shrinkage: 'Penyusutan',
+  reject: 'Reject',
+};
+
 interface MortalityDraft {
   qty: string;
   cause: string;
+  kind: LossKind;
+}
+
+const EMPTY_DRAFT: MortalityDraft = { qty: '', cause: '', kind: 'mortality' };
+
+interface AdjustmentHistoryRow {
+  id: string;
+  event_at: string;
+  qty_kg: number;
+  kind: 'shrinkage' | 'reject';
+  reason: string;
+  inventory_ledger_id: string | null;
+  batch_line: {
+    batch: { site_id: string; tank: { name: string } | null } | null;
+    lot: { product: { name: string } | null } | null;
+  } | null;
 }
 
 interface MortalityHistoryRow {
@@ -39,9 +63,10 @@ function formatDateTime(value: string): string {
 // site/track (CLAUDE.md #1). Total ditampilkan per produk DI DALAM satu site,
 // tidak pernah dijumlahkan lintas site.
 //
-// Mortalitas = insert ke mortality_events; trigger DB membuat baris ledger
-// negatif otomatis (append-only, tidak ada UPDATE stok). Guard saldo ada di
-// DB (migration 0014), pengecekan di sini cuma supaya pesan lebih cepat.
+// Mortalitas = insert ke mortality_events; penyusutan/reject = insert ke
+// stock_adjustments (migration 0021, alasan WAJIB). Trigger DB membuat baris
+// ledger negatif otomatis (append-only, tidak ada UPDATE stok). Guard saldo ada
+// di DB (0014/0021), pengecekan di sini cuma supaya pesan lebih cepat.
 export function StokMortalitasPage() {
   const { session } = useAuth();
 
@@ -51,6 +76,7 @@ export function StokMortalitasPage() {
   const [loadingLines, setLoadingLines] = useState(false);
   const [linesError, setLinesError] = useState<string | null>(null);
   const [history, setHistory] = useState<MortalityHistoryRow[]>([]);
+  const [adjustmentHistory, setAdjustmentHistory] = useState<AdjustmentHistoryRow[]>([]);
   const [reversedLedgerIds, setReversedLedgerIds] = useState<Set<string>>(new Set());
   const [historyLimit, setHistoryLimit] = useState(HISTORY_PAGE);
 
@@ -78,12 +104,20 @@ export function StokMortalitasPage() {
     setLoadingLines(true);
     setLinesError(null);
 
-    const [{ data, error }, { data: historyData }] = await Promise.all([
+    const [{ data, error }, { data: historyData }, { data: adjustmentData }] = await Promise.all([
       supabase.rpc('get_available_batch_lines', { p_site_id: siteId }),
       supabase
         .from('mortality_events')
         .select(
           'id, event_at, qty_kg, cause, inventory_ledger_id, batch_line:batch_lines!inner(batch:batches!inner(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
+        )
+        .eq('batch_line.batch.site_id', siteId)
+        .order('event_at', { ascending: false })
+        .limit(limit),
+      supabase
+        .from('stock_adjustments')
+        .select(
+          'id, event_at, qty_kg, kind, reason, inventory_ledger_id, batch_line:batch_lines!inner(batch:batches!inner(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
         )
         .eq('batch_line.batch.site_id', siteId)
         .order('event_at', { ascending: false })
@@ -100,7 +134,12 @@ export function StokMortalitasPage() {
     const siteHistory = (historyData as unknown as MortalityHistoryRow[]) ?? [];
     setHistory(siteHistory);
 
-    const ledgerIds = siteHistory.map((row) => row.inventory_ledger_id).filter((id): id is string => Boolean(id));
+    const siteAdjustments = (adjustmentData as unknown as AdjustmentHistoryRow[]) ?? [];
+    setAdjustmentHistory(siteAdjustments);
+
+    const ledgerIds = [...siteHistory, ...siteAdjustments]
+      .map((row) => row.inventory_ledger_id)
+      .filter((id): id is string => Boolean(id));
     if (ledgerIds.length > 0) {
       const { data: reversalData } = await supabase.from('inventory_ledger').select('reversal_of').in('reversal_of', ledgerIds);
       setReversedLedgerIds(new Set(((reversalData as { reversal_of: string }[] | null) ?? []).map((r) => r.reversal_of)));
@@ -129,22 +168,27 @@ export function StokMortalitasPage() {
   }, [lines]);
 
   function updateDraft(lineId: string, patch: Partial<MortalityDraft>) {
-    setDrafts((prev) => ({ ...prev, [lineId]: { ...(prev[lineId] ?? { qty: '', cause: '' }), ...patch } }));
+    setDrafts((prev) => ({ ...prev, [lineId]: { ...(prev[lineId] ?? EMPTY_DRAFT), ...patch } }));
   }
 
   async function handleRecord(line: AvailableBatchLine) {
-    const draft = drafts[line.batch_line_id];
-    const qty = Number(draft?.qty ?? 0);
+    const draft = drafts[line.batch_line_id] ?? EMPTY_DRAFT;
+    const qty = Number(draft.qty ?? 0);
+    const label = KIND_LABEL[draft.kind];
 
     if (!(qty > 0)) {
-      setFeedback({ variant: 'danger', message: 'Qty mortalitas harus lebih dari 0.' });
+      setFeedback({ variant: 'danger', message: `Qty ${label.toLowerCase()} harus lebih dari 0.` });
       return;
     }
     if (qty > line.balance_kg) {
       setFeedback({
         variant: 'danger',
-        message: `Qty mortalitas melebihi saldo ${line.product_name} (${line.tank_name}): ${formatKg(line.balance_kg)}.`,
+        message: `Qty ${label.toLowerCase()} melebihi saldo ${line.product_name} (${line.tank_name}): ${formatKg(line.balance_kg)}.`,
       });
+      return;
+    }
+    if (draft.kind !== 'mortality' && !draft.cause.trim()) {
+      setFeedback({ variant: 'danger', message: `Alasan wajib diisi untuk ${label.toLowerCase()}.` });
       return;
     }
     if (!session?.user.id || submittingId) return;
@@ -152,14 +196,26 @@ export function StokMortalitasPage() {
     setSubmittingId(line.batch_line_id);
     setFeedback(null);
 
-    const { error } = await supabase.from('mortality_events').insert({
-      batch_line_id: line.batch_line_id,
-      event_at: new Date().toISOString(),
-      qty_kg: qty,
-      cause: draft?.cause.trim() || null,
-      recorded_by: session.user.id,
-      client_id: crypto.randomUUID(),
-    });
+    const now = new Date().toISOString();
+    const { error } =
+      draft.kind === 'mortality'
+        ? await supabase.from('mortality_events').insert({
+            batch_line_id: line.batch_line_id,
+            event_at: now,
+            qty_kg: qty,
+            cause: draft.cause.trim() || null,
+            recorded_by: session.user.id,
+            client_id: crypto.randomUUID(),
+          })
+        : await supabase.from('stock_adjustments').insert({
+            batch_line_id: line.batch_line_id,
+            kind: draft.kind,
+            event_at: now,
+            qty_kg: qty,
+            reason: draft.cause.trim(),
+            recorded_by: session.user.id,
+            client_id: crypto.randomUUID(),
+          });
 
     setSubmittingId(null);
 
@@ -168,7 +224,7 @@ export function StokMortalitasPage() {
       return;
     }
 
-    setFeedback({ variant: 'success', message: `Mortalitas ${formatKg(qty)} untuk ${line.product_name} berhasil dicatat.` });
+    setFeedback({ variant: 'success', message: `${label} ${formatKg(qty)} untuk ${line.product_name} berhasil dicatat.` });
     setDrafts((prev) => {
       const next = { ...prev };
       delete next[line.batch_line_id];
@@ -195,13 +251,32 @@ export function StokMortalitasPage() {
     },
   ];
 
+  const adjustmentColumns: DataTableColumn<AdjustmentHistoryRow>[] = [
+    { key: 'event_at', header: 'Waktu', render: (row) => formatDateTime(row.event_at) },
+    { key: 'kind', header: 'Jenis', render: (row) => KIND_LABEL[row.kind] },
+    { key: 'product', header: 'Produk', render: (row) => row.batch_line?.lot?.product?.name ?? '-' },
+    { key: 'tank', header: 'Tank', render: (row) => row.batch_line?.batch?.tank?.name ?? '-' },
+    { key: 'qty_kg', header: 'Qty', render: (row) => formatKg(row.qty_kg) },
+    { key: 'reason', header: 'Alasan' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) =>
+        row.inventory_ledger_id && reversedLedgerIds.has(row.inventory_ledger_id) ? (
+          <StatusBadge label="Dikoreksi" tone="danger" />
+        ) : (
+          <StatusBadge label="Berlaku" tone="success" />
+        ),
+    },
+  ];
+
   return (
-    <div className="max-w-4xl space-y-6">
+    <div className="max-w-5xl space-y-6">
       <div>
         <h1 className="text-xl font-semibold text-app-text">Inventory &gt; Stok &amp; Mortalitas</h1>
         <p className="text-sm text-app-muted">
-          Stok per site (dihitung dari ledger) dan pencatatan mortalitas. Koreksi dilakukan lewat baris baru, bukan
-          mengubah stok.
+          Stok per site (dihitung dari ledger) dan pencatatan mortalitas, penyusutan, dan reject. Koreksi dilakukan
+          lewat baris baru, bukan mengubah stok.
         </p>
       </div>
 
@@ -253,30 +328,42 @@ export function StokMortalitasPage() {
 
         <div className="space-y-2">
           {lines.map((line) => {
-            const draft = drafts[line.batch_line_id] ?? { qty: '', cause: '' };
+            const draft = drafts[line.batch_line_id] ?? EMPTY_DRAFT;
             return (
               <div
                 key={line.batch_line_id}
-                className="grid grid-cols-1 gap-2 rounded-md border border-app-border p-3 sm:grid-cols-[2fr_1fr_1fr_2fr_auto]"
+                className="grid grid-cols-1 gap-2 rounded-md border border-app-border p-3 sm:grid-cols-[2fr_1fr_1.2fr_1fr_2fr_auto]"
               >
                 <div>
                   <p className="text-sm font-medium text-app-text">{line.product_name}</p>
                   <p className="text-xs text-app-muted">{line.tank_name}</p>
                 </div>
                 <div className="text-sm text-app-text">{formatKg(line.balance_kg)}</div>
+                <select
+                  value={draft.kind}
+                  onChange={(e) => updateDraft(line.batch_line_id, { kind: e.target.value as LossKind })}
+                  className={inputClass}
+                  aria-label="Jenis pengurangan stok"
+                >
+                  {(Object.keys(KIND_LABEL) as LossKind[]).map((kind) => (
+                    <option key={kind} value={kind}>
+                      {KIND_LABEL[kind]}
+                    </option>
+                  ))}
+                </select>
                 <input
                   type="number"
                   min="0"
                   max={line.balance_kg}
                   step="0.001"
-                  placeholder="Qty mati (kg)"
+                  placeholder="Qty (kg)"
                   value={draft.qty}
                   onChange={(e) => updateDraft(line.batch_line_id, { qty: e.target.value })}
                   className={inputClass}
                 />
                 <input
                   type="text"
-                  placeholder="Penyebab (opsional)"
+                  placeholder={draft.kind === 'mortality' ? 'Penyebab (opsional)' : 'Alasan (wajib)'}
                   value={draft.cause}
                   onChange={(e) => updateDraft(line.batch_line_id, { cause: e.target.value })}
                   className={inputClass}
@@ -287,7 +374,7 @@ export function StokMortalitasPage() {
                   disabled={submittingId !== null || !draft.qty}
                   className="rounded-md bg-app-accent px-3 py-2 text-sm font-semibold text-black disabled:opacity-40"
                 >
-                  {submittingId === line.batch_line_id ? 'Menyimpan...' : 'Catat Mortalitas'}
+                  {submittingId === line.batch_line_id ? 'Menyimpan...' : `Catat ${KIND_LABEL[draft.kind]}`}
                 </button>
               </div>
             );
@@ -299,7 +386,15 @@ export function StokMortalitasPage() {
         <div className="space-y-2">
           <h2 className="text-sm font-semibold text-app-text">Riwayat Mortalitas (terbaru di site ini)</h2>
           <DataTable columns={historyColumns} rows={history} getRowId={(row) => row.id} emptyLabel="Belum ada mortalitas." />
-          {history.length >= historyLimit && (
+
+          <h2 className="pt-2 text-sm font-semibold text-app-text">Riwayat Penyusutan &amp; Reject (terbaru di site ini)</h2>
+          <DataTable
+            columns={adjustmentColumns}
+            rows={adjustmentHistory}
+            getRowId={(row) => row.id}
+            emptyLabel="Belum ada penyusutan atau reject."
+          />
+          {(history.length >= historyLimit || adjustmentHistory.length >= historyLimit) && (
             <button
               type="button"
               onClick={() => {
