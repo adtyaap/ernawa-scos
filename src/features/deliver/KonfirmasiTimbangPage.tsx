@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { formatKg } from '../../lib/format';
+import { formatKg, todayLocalDate } from '../../lib/format';
 import type { Track } from '../../types/domain';
 
 const inputClass =
@@ -19,10 +19,6 @@ interface PendingDelivery {
 interface Draft {
   actual_weight_kg: string;
   delivered_at: string;
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 // Worklist deliveries yang belum ditimbang (actual_weight_kg masih null).
@@ -73,7 +69,7 @@ export function KonfirmasiTimbangPage() {
   }, []);
 
   function getDraft(id: string): Draft {
-    return drafts[id] ?? { actual_weight_kg: '', delivered_at: today() };
+    return drafts[id] ?? { actual_weight_kg: '', delivered_at: todayLocalDate() };
   }
 
   function updateDraft(id: string, patch: Partial<Draft>) {

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { todayLocalDate } from '../../lib/format';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import type { Product, Site, Supplier, Tank } from '../../types/domain';
 
@@ -57,7 +58,7 @@ export function TerimaCepatPage() {
   const [supplierId, setSupplierId] = useState('');
   const [siteId, setSiteId] = useState('');
   const [tankId, setTankId] = useState('');
-  const [transactionDate, setTransactionDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [transactionDate, setTransactionDate] = useState(todayLocalDate);
   const [lots, setLots] = useState<LotDraft[]>([newLotDraft()]);
 
   const [submitting, setSubmitting] = useState(false);

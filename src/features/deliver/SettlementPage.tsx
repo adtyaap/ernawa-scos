@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { formatCurrency, formatKg } from '../../lib/format';
+import { formatCurrency, formatKg, todayLocalDate } from '../../lib/format';
 import type { Customer, PendingSettlementDelivery, SettlementMode } from '../../types/domain';
 
 const inputClass =
@@ -187,7 +187,7 @@ export function SettlementPage() {
         });
         return;
       }
-      const baseDate = delivery.delivered_at ? delivery.delivered_at.slice(0, 10) : new Date().toISOString().slice(0, 10);
+      const baseDate = delivery.delivered_at ? delivery.delivered_at.slice(0, 10) : todayLocalDate();
       dueDate = addDays(baseDate, selectedCustomer.payment_term_days);
     }
 

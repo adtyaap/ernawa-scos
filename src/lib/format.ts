@@ -19,3 +19,13 @@ export function formatCurrency(value: number): string {
 export function formatKg(value: number): string {
   return `${numberFormatter.format(value)} kg`;
 }
+
+// Tanggal hari ini menurut zona waktu perangkat (YYYY-MM-DD). JANGAN pakai
+// new Date().toISOString().slice(0, 10): itu UTC, jadi user WIB (UTC+7) yang
+// buka form jam 00:00-06:59 dapat default tanggal kemarin.
+export function todayLocalDate(): string {
+  const now = new Date();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${now.getFullYear()}-${month}-${day}`;
+}
