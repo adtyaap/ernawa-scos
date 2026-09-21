@@ -20,6 +20,7 @@ interface MortalityHistoryRow {
   event_at: string;
   qty_kg: number;
   cause: string | null;
+  inventory_ledger_id: string | null;
   batch_line: {
     batch: { site_id: string; tank: { name: string } | null } | null;
     lot: { product: { name: string } | null } | null;
@@ -48,6 +49,7 @@ export function StokMortalitasPage() {
   const [loadingLines, setLoadingLines] = useState(false);
   const [linesError, setLinesError] = useState<string | null>(null);
   const [history, setHistory] = useState<MortalityHistoryRow[]>([]);
+  const [reversedLedgerIds, setReversedLedgerIds] = useState<Set<string>>(new Set());
 
   const [drafts, setDrafts] = useState<Record<string, MortalityDraft>>({});
   const [submittingId, setSubmittingId] = useState<string | null>(null);
@@ -75,7 +77,7 @@ export function StokMortalitasPage() {
       supabase
         .from('mortality_events')
         .select(
-          'id, event_at, qty_kg, cause, batch_line:batch_lines(batch:batches(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
+          'id, event_at, qty_kg, cause, inventory_ledger_id, batch_line:batch_lines(batch:batches(site_id, tank:tanks(name)), lot:receiving_lots(product:products(name)))',
         )
         .order('event_at', { ascending: false })
         .limit(50),
@@ -89,7 +91,16 @@ export function StokMortalitasPage() {
     }
 
     const allHistory = (historyData as unknown as MortalityHistoryRow[]) ?? [];
-    setHistory(allHistory.filter((row) => row.batch_line?.batch?.site_id === siteId).slice(0, 20));
+    const siteHistory = allHistory.filter((row) => row.batch_line?.batch?.site_id === siteId).slice(0, 20);
+    setHistory(siteHistory);
+
+    const ledgerIds = siteHistory.map((row) => row.inventory_ledger_id).filter((id): id is string => Boolean(id));
+    if (ledgerIds.length > 0) {
+      const { data: reversalData } = await supabase.from('inventory_ledger').select('reversal_of').in('reversal_of', ledgerIds);
+      setReversedLedgerIds(new Set(((reversalData as { reversal_of: string }[] | null) ?? []).map((r) => r.reversal_of)));
+    } else {
+      setReversedLedgerIds(new Set());
+    }
     setLoadingLines(false);
   }
 
@@ -165,6 +176,16 @@ export function StokMortalitasPage() {
     { key: 'tank', header: 'Tank', render: (row) => row.batch_line?.batch?.tank?.name ?? '-' },
     { key: 'qty_kg', header: 'Qty', render: (row) => formatKg(row.qty_kg) },
     { key: 'cause', header: 'Penyebab', render: (row) => row.cause ?? '-' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) =>
+        row.inventory_ledger_id && reversedLedgerIds.has(row.inventory_ledger_id) ? (
+          <StatusBadge label="Dikoreksi" tone="danger" />
+        ) : (
+          <StatusBadge label="Berlaku" tone="success" />
+        ),
+    },
   ];
 
   return (

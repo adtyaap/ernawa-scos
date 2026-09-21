@@ -8,6 +8,7 @@ import { InventoryIndexPage } from './features/inventory/InventoryIndexPage';
 import { TerimaCepatPage } from './features/inventory/TerimaCepatPage';
 import { StokMortalitasPage } from './features/inventory/StokMortalitasPage';
 import { InspeksiKualitasPage } from './features/inventory/InspeksiKualitasPage';
+import { KoreksiLedgerPage } from './features/inventory/KoreksiLedgerPage';
 import { ManajemenUserPage } from './features/admin/ManajemenUserPage';
 import { ComingSoonPage } from './components/shared/ComingSoonPage';
 import { DeliverPage } from './features/deliver/DeliverPage';
@@ -31,6 +32,7 @@ export default function App() {
             <Route path="/inventory/terima-cepat" element={<TerimaCepatPage />} />
             <Route path="/inventory/stok" element={<StokMortalitasPage />} />
             <Route path="/inventory/inspeksi-kualitas" element={<InspeksiKualitasPage />} />
+            <Route path="/inventory/koreksi" element={<KoreksiLedgerPage />} />
             <Route path="/deliver" element={<DeliverPage />} />
             <Route path="/deliver/customer" element={<CustomerPage />} />
             <Route path="/deliver/demand-baru" element={<DemandPage />} />

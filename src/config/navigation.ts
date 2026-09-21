@@ -28,6 +28,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Terima Cepat', path: '/inventory/terima-cepat' },
       { label: 'Stok & Mortalitas', path: '/inventory/stok' },
       { label: 'Inspeksi Kualitas', path: '/inventory/inspeksi-kualitas' },
+      { label: 'Koreksi Ledger', path: '/inventory/koreksi' },
     ],
   },
   {
