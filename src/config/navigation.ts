@@ -28,6 +28,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Terima Cepat', path: '/inventory/terima-cepat' },
       { label: 'Stok & Mortalitas', path: '/inventory/stok' },
       { label: 'Inspeksi Kualitas', path: '/inventory/inspeksi-kualitas' },
+      { label: 'Riwayat Penerimaan', path: '/inventory/riwayat' },
       { label: 'Koreksi Ledger', path: '/inventory/koreksi' },
     ],
   },
@@ -46,6 +47,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Alokasi & Kirim', path: '/deliver/alokasi-kirim' },
       { label: 'Konfirmasi Timbang', path: '/deliver/konfirmasi-timbang' },
       { label: 'Settlement', path: '/deliver/settlement' },
+      { label: 'Riwayat Delivery', path: '/deliver/riwayat' },
     ],
   },
   {

@@ -20,6 +20,16 @@ export function formatKg(value: number): string {
   return `${numberFormatter.format(value)} kg`;
 }
 
+// Awal / akhir hari (zona waktu perangkat) dalam ISO UTC, untuk filter kolom
+// timestamptz dari input tanggal YYYY-MM-DD.
+export function localDayStartISO(date: string): string {
+  return new Date(`${date}T00:00:00`).toISOString();
+}
+
+export function localDayEndISO(date: string): string {
+  return new Date(`${date}T23:59:59.999`).toISOString();
+}
+
 // Tanggal hari ini menurut zona waktu perangkat (YYYY-MM-DD). JANGAN pakai
 // new Date().toISOString().slice(0, 10): itu UTC, jadi user WIB (UTC+7) yang
 // buka form jam 00:00-06:59 dapat default tanggal kemarin.
