@@ -5,3 +5,6 @@
 node_modules/
 dist/
 *.tsbuildinfo
+
+# Konfigurasi editor lokal (bukan bagian aplikasi)
+.vscode/

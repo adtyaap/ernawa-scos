@@ -212,13 +212,15 @@ export function AlokasiKirimPage() {
 
     const { error } = await supabase.rpc('create_delivery_with_allocations', {
       p_site_id: selectedSiteId,
-      p_demand_id: selectedDemandId || null,
+      // Fungsi menerima NULL (spot sale), tapi tipe hasil generate menganggap
+      // argumen uuid selalu string — makanya di-cast.
+      p_demand_id: (selectedDemandId || null) as string,
       p_allocations: selectedRows.map((row) => ({
         batch_line_id: row.line.batch_line_id,
         qty_kg: row.qty,
         fefo_rank: availableBatchLines.findIndex((l) => l.batch_line_id === row.line.batch_line_id) + 1,
       })),
-      p_override_reason: isOverride ? overrideReason.trim() : null,
+      p_override_reason: isOverride ? overrideReason.trim() : undefined,
     });
 
     if (error) {

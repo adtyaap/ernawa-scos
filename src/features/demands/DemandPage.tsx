@@ -188,7 +188,7 @@ export function DemandPage() {
 
     const { data: userData } = await supabase.auth.getUser();
 
-    const payload: Record<string, unknown> = {
+    const payload = {
       customer_id: formCustomerId,
       product_id: formProductId,
       requested_qty_kg: qty,
@@ -196,18 +196,12 @@ export function DemandPage() {
       needed_by: formNeededBy || null,
     };
 
-    if (editingId) {
-      // Cuma owner yang pernah sampai ke sini (tombol Edit owner-only),
-      // dan trigger fn_demands_restrict_field_update mengizinkan owner
-      // mengubah kolom apa saja termasuk status.
-      payload.status = formStatus;
-    } else {
-      payload.created_by = userData.user?.id;
-    }
-
+    // Edit: cuma owner yang pernah sampai ke sini (tombol Edit owner-only),
+    // dan trigger fn_demands_restrict_field_update mengizinkan owner mengubah
+    // kolom apa saja termasuk status.
     const { error } = editingId
-      ? await supabase.from('demands').update(payload).eq('id', editingId)
-      : await supabase.from('demands').insert(payload);
+      ? await supabase.from('demands').update({ ...payload, status: formStatus }).eq('id', editingId)
+      : await supabase.from('demands').insert({ ...payload, created_by: userData.user?.id });
 
     if (error) {
       setFormFeedback({ variant: 'danger', message: error.message });

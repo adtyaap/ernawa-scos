@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import type { Database } from '../types/database';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -9,4 +10,4 @@ if (!supabaseUrl || !supabaseAnonKey) {
 
 // Hanya anon key yang boleh ada di sini (client-side). service_role key
 // TIDAK PERNAH boleh dipakai di kode frontend — lihat CLAUDE.md aturan #5.
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);

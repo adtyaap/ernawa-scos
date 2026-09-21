@@ -1,6 +1,7 @@
-// Tipe domain minimal, ditulis manual — BUKAN tipe hasil generate Supabase.
-// Ganti dengan `supabase gen types typescript` begitu project sudah
-// tersambung lewat Supabase CLI, supaya tetap sinkron dengan migrations/.
+// Tipe domain untuk tampilan (hasil embed/gabungan yang tidak ada 1:1 di tabel).
+// Skema tabel & fungsi yang SEBENARNYA ada di ./database.ts (hasil generate dari
+// Supabase; client Supabase memakainya lewat createClient<Database>). Generate
+// ulang database.ts setiap ada migration baru.
 
 export type Track = 'trading' | 'budidaya';
 
