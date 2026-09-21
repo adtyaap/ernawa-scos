@@ -61,6 +61,9 @@ export const NAV_TABS: TabConfig[] = [
     label: 'Admin',
     path: '/admin',
     ownerOnly: true,
-    submenu: [{ label: 'Manajemen User', path: '/admin/user' }],
+    submenu: [
+      { label: 'Manajemen User', path: '/admin/user' },
+      { label: 'Audit Log', path: '/admin/audit' },
+    ],
   },
 ];

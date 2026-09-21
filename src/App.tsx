@@ -11,6 +11,7 @@ import { InspeksiKualitasPage } from './features/inventory/InspeksiKualitasPage'
 import { RiwayatPenerimaanPage } from './features/inventory/RiwayatPenerimaanPage';
 import { RiwayatDeliveryPage } from './features/deliver/RiwayatDeliveryPage';
 import { KoreksiLedgerPage } from './features/inventory/KoreksiLedgerPage';
+import { AuditLogPage } from './features/admin/AuditLogPage';
 import { GantiKatasandiPage } from './features/account/GantiKatasandiPage';
 import { ManajemenUserPage } from './features/admin/ManajemenUserPage';
 import { ComingSoonPage } from './components/shared/ComingSoonPage';
@@ -49,6 +50,7 @@ export default function App() {
             <Route path="/akun/katasandi" element={<GantiKatasandiPage />} />
             <Route path="/admin" element={<ComingSoonPage title="Admin" />} />
             <Route path="/admin/user" element={<ManajemenUserPage />} />
+            <Route path="/admin/audit" element={<AuditLogPage />} />
           </Routes>
         </AppShell>
       </RequireAuth>
