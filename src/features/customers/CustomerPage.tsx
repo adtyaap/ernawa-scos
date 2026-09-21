@@ -146,10 +146,17 @@ export function CustomerPage() {
     const nextStatus: Customer['status'] = customer.status === 'aktif' ? 'nonaktif' : 'aktif';
     setFormFeedback(null);
 
-    const { error } = await supabase.from('customers').update({ status: nextStatus }).eq('id', customer.id);
+    const { data, error } = await supabase
+      .from('customers')
+      .update({ status: nextStatus })
+      .eq('id', customer.id)
+      .select('id');
 
-    if (error) {
-      setFormFeedback({ variant: 'danger', message: error.message });
+    if (error || !data || data.length === 0) {
+      setFormFeedback({
+        variant: 'danger',
+        message: error?.message ?? 'Tidak ada data yang berubah. Kemungkinan Anda tidak punya izin.',
+      });
       return;
     }
 

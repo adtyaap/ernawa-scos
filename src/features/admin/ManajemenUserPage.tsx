@@ -60,12 +60,15 @@ export function ManajemenUserPage() {
     setSavingId(user.id);
     setFeedback(null);
 
-    const { error } = await supabase.from('users').update({ role: nextRole }).eq('id', user.id);
+    const { data, error } = await supabase.from('users').update({ role: nextRole }).eq('id', user.id).select('id');
 
     setSavingId(null);
 
-    if (error) {
-      setFeedback({ variant: 'danger', message: error.message });
+    if (error || !data || data.length === 0) {
+      setFeedback({
+        variant: 'danger',
+        message: error?.message ?? 'Tidak ada data yang berubah. Kemungkinan Anda tidak punya izin.',
+      });
       return;
     }
 

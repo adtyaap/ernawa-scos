@@ -52,13 +52,19 @@ export function PiutangPage() {
     setMarkingId(row.settlement_id);
     setFeedback(null);
 
-    const { error } = await supabase
+    // .select() supaya jumlah baris yang benar-benar berubah bisa dicek: RLS
+    // yang menolak UPDATE tidak melempar error, cuma menghasilkan 0 baris.
+    const { data, error } = await supabase
       .from('settlements')
       .update({ settled_at: new Date().toISOString() })
-      .eq('id', row.settlement_id);
+      .eq('id', row.settlement_id)
+      .select('id');
 
-    if (error) {
-      setFeedback({ variant: 'danger', message: error.message });
+    if (error || !data || data.length === 0) {
+      setFeedback({
+        variant: 'danger',
+        message: error?.message ?? 'Tidak ada data yang berubah. Kemungkinan Anda tidak punya izin untuk menandai lunas.',
+      });
       setMarkingId(null);
       return;
     }
