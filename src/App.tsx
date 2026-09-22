@@ -15,6 +15,7 @@ function lazyPage<T extends Record<string, ComponentType>>(loader: () => Promise
 
 const HomePage = lazyPage(() => import('./features/home/HomePage'), 'HomePage');
 const SourcePage = lazyPage(() => import('./features/source/SourcePage'), 'SourcePage');
+const AcuanHargaPage = lazyPage(() => import('./features/source/AcuanHargaPage'), 'AcuanHargaPage');
 const InventoryIndexPage = lazyPage(() => import('./features/inventory/InventoryIndexPage'), 'InventoryIndexPage');
 const TerimaCepatPage = lazyPage(() => import('./features/inventory/TerimaCepatPage'), 'TerimaCepatPage');
 const StokMortalitasPage = lazyPage(() => import('./features/inventory/StokMortalitasPage'), 'StokMortalitasPage');
@@ -44,6 +45,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/source" element={<SourcePage />} />
+              <Route path="/source/acuan-harga" element={<AcuanHargaPage />} />
               <Route path="/inventory" element={<InventoryIndexPage />} />
               <Route path="/inventory/terima-cepat" element={<TerimaCepatPage />} />
               <Route path="/inventory/stok" element={<StokMortalitasPage />} />

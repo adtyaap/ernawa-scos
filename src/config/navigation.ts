@@ -19,7 +19,7 @@ export interface TabConfig {
 
 export const NAV_TABS: TabConfig[] = [
   { key: 'home', label: 'Home', path: '/', submenu: [{ label: 'Ganti Katasandi', path: '/akun/katasandi' }] },
-  { key: 'source', label: 'Source', path: '/source', submenu: [] },
+  { key: 'source', label: 'Source', path: '/source', submenu: [{ label: 'Acuan Harga', path: '/source/acuan-harga' }] },
   {
     key: 'inventory',
     label: 'Inventory',

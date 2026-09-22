@@ -1633,6 +1633,13 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      ref_price: {
+        Args: { p_date?: string; p_product_id: string; p_site_id: string }
+        Returns: {
+          price: number
+          source: string
+        }[]
+      }
       user_can_access_site: { Args: { p_site_id: string }; Returns: boolean }
     }
     Enums: {
