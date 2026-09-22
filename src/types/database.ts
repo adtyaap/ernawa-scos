@@ -1829,6 +1829,23 @@ export type Database = {
         Args: { p_business_date: string; p_site_id: string; p_tank_id: string }
         Returns: string
       }
+      get_site_forecast: {
+        Args: {
+          p_forecast_days?: number
+          p_history_days?: number
+          p_site_id: string
+        }
+        Returns: {
+          avg_daily_kg: number
+          data_points: number
+          first_received_at: string
+          forecast_kg: number
+          last_received_at: string
+          product_id: string
+          product_name: string
+          total_received_kg: number
+        }[]
+      }
       investor_settlements_aging: {
         Args: never
         Returns: {

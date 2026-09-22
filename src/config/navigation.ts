@@ -25,6 +25,7 @@ export const NAV_TABS: TabConfig[] = [
     path: '/source',
     submenu: [
       { label: 'Acuan Harga', path: '/source/acuan-harga' },
+      { label: 'Perkiraan Pasokan', path: '/source/perkiraan-pasokan' },
       { label: 'Kelola Produk', path: '/source/produk' },
     ],
   },

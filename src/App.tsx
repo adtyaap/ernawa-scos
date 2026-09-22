@@ -17,6 +17,7 @@ const HomePage = lazyPage(() => import('./features/home/HomePage'), 'HomePage');
 const SourcePage = lazyPage(() => import('./features/source/SourcePage'), 'SourcePage');
 const AcuanHargaPage = lazyPage(() => import('./features/source/AcuanHargaPage'), 'AcuanHargaPage');
 const KelolaProdukPage = lazyPage(() => import('./features/source/KelolaProdukPage'), 'KelolaProdukPage');
+const PerkiraanPasokanPage = lazyPage(() => import('./features/source/PerkiraanPasokanPage'), 'PerkiraanPasokanPage');
 const InventoryIndexPage = lazyPage(() => import('./features/inventory/InventoryIndexPage'), 'InventoryIndexPage');
 const TerimaCepatPage = lazyPage(() => import('./features/inventory/TerimaCepatPage'), 'TerimaCepatPage');
 const ImportTerimaCepatPage = lazyPage(() => import('./features/inventory/ImportTerimaCepatPage'), 'ImportTerimaCepatPage');
@@ -53,6 +54,7 @@ export default function App() {
               <Route path="/source" element={<SourcePage />} />
               <Route path="/source/acuan-harga" element={<AcuanHargaPage />} />
               <Route path="/source/produk" element={<KelolaProdukPage />} />
+              <Route path="/source/perkiraan-pasokan" element={<PerkiraanPasokanPage />} />
               <Route path="/inventory" element={<InventoryIndexPage />} />
               <Route path="/inventory/terima-cepat" element={<TerimaCepatPage />} />
               <Route path="/inventory/import-terima-cepat" element={<ImportTerimaCepatPage />} />

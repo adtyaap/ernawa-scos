@@ -67,6 +67,24 @@ export interface AvailableBatchLine {
   is_overdue: boolean;
 }
 
+// Hasil RPC get_site_forecast(p_site_id, p_history_days, p_forecast_days) —
+// migration 0035 (PRD-MASTER site_forecast, dikonfirmasi user setelah
+// pembahasan per-item: dibangun meski model masih kasar). Proyeksi rata-rata
+// harian dari riwayat penerimaan, SENGAJA sederhana (bukan model
+// time-series) -- data_points disertakan supaya user bisa menilai sendiri
+// reliabilitasnya, bukan angka tunggal yang terlihat pasti padahal basisnya
+// tipis.
+export interface SiteForecastRow {
+  product_id: string;
+  product_name: string;
+  data_points: number;
+  total_received_kg: number;
+  avg_daily_kg: number;
+  forecast_kg: number;
+  first_received_at: string | null;
+  last_received_at: string | null;
+}
+
 // Hasil RPC get_fefo_risk_report() — migration 0032. Sama seperti
 // AvailableBatchLine tapi lintas-site (site_id/site_name/track ditambahkan,
 // TANPA parameter site) dan HANYA baris is_overdue = true yang dikembalikan
