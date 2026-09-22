@@ -86,7 +86,7 @@ export function HandoverPage() {
          to_site:sites!handovers_to_site_id_fkey(name),
          handover_lines(
            id, qty_kg, qty_kg_received,
-           batch_line:batch_lines(
+           batch_line:batch_lines!handover_lines_batch_line_id_fkey(
              id,
              receiving_lot:receiving_lots(product:products(name)),
              batch:batches(tank:tanks(name))
