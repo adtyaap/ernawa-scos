@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Star, Trash2, X } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../lib/authContext';
 import { todayLocalDate } from '../../lib/format';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import type { Product, Site, Supplier, Tank } from '../../types/domain';
@@ -8,6 +9,15 @@ import type { Product, Site, Supplier, Tank } from '../../types/domain';
 // Halaman ini cuma butuh id+name supplier untuk dropdown (tidak perlu
 // created_at), jadi pakai Pick daripada memaksa fetch kolom yang tidak dipakai.
 type SupplierOption = Pick<Supplier, 'id' | 'name'>;
+
+interface FavoriteRow {
+  id: string;
+  label: string;
+  supplier_id: string;
+  site_id: string;
+  tank_id: string;
+  product_id: string;
+}
 
 interface LotDraft {
   key: string;
@@ -49,6 +59,8 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
 // kemungkinan data parsial (transaksi tanpa lot/batch_lines) kalau gagal
 // di tengah jalan.
 export function TerimaCepatPage() {
+  const { session } = useAuth();
+
   const [suppliers, setSuppliers] = useState<SupplierOption[]>([]);
   const [sites, setSites] = useState<Site[]>([]);
   const [tanks, setTanks] = useState<Tank[]>([]);
@@ -58,11 +70,16 @@ export function TerimaCepatPage() {
   const [supplierId, setSupplierId] = useState('');
   const [siteId, setSiteId] = useState('');
   const [tankId, setTankId] = useState('');
+  const [pendingTankId, setPendingTankId] = useState<string | null>(null);
   const [transactionDate, setTransactionDate] = useState(todayLocalDate);
   const [lots, setLots] = useState<LotDraft[]>([newLotDraft()]);
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
+
+  const [favorites, setFavorites] = useState<FavoriteRow[]>([]);
+  const [savingFavorite, setSavingFavorite] = useState(false);
+  const [favoriteLabel, setFavoriteLabel] = useState('');
 
   useEffect(() => {
     async function loadMaster() {
@@ -79,7 +96,16 @@ export function TerimaCepatPage() {
     }
 
     loadMaster();
+    loadFavorites();
   }, []);
+
+  async function loadFavorites() {
+    const { data } = await supabase
+      .from('terima_cepat_favorites')
+      .select('id, label, supplier_id, site_id, tank_id, product_id')
+      .order('created_at', { ascending: false });
+    setFavorites((data as FavoriteRow[]) ?? []);
+  }
 
   useEffect(() => {
     if (!siteId) {
@@ -91,11 +117,54 @@ export function TerimaCepatPage() {
     async function loadTanks() {
       const { data } = await supabase.from('tanks').select('id, site_id, name').eq('site_id', siteId).order('name');
       setTanks(data ?? []);
-      setTankId('');
+      // Kalau ada tank yang sedang "dipesan" (dari klik Papan Favorit),
+      // pakai itu -- jangan direset ke kosong seperti biasanya, supaya
+      // menerapkan favorit benar-benar mengisi Tank juga, bukan cuma
+      // Supplier/Site.
+      setTankId(pendingTankId ?? '');
+      setPendingTankId(null);
     }
 
     loadTanks();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [siteId]);
+
+  function applyFavorite(fav: FavoriteRow) {
+    setSupplierId(fav.supplier_id);
+    setPendingTankId(fav.tank_id);
+    setTankId(fav.tank_id); // jaga-jaga kalau site sama dengan sebelumnya (efek di atas tidak akan re-fire)
+    setSiteId(fav.site_id);
+    setLots([{ key: crypto.randomUUID(), product_id: fav.product_id, qty_kg: '', buy_price_per_kg: '' }]);
+    setFeedback(null);
+  }
+
+  async function handleSaveFavorite() {
+    const firstProductId = lots[0]?.product_id;
+    if (!supplierId || !siteId || !tankId || !firstProductId || !favoriteLabel.trim() || !session?.user.id) return;
+
+    const { error } = await supabase.from('terima_cepat_favorites').insert({
+      user_id: session.user.id,
+      label: favoriteLabel.trim(),
+      supplier_id: supplierId,
+      site_id: siteId,
+      tank_id: tankId,
+      product_id: firstProductId,
+    });
+
+    if (error) {
+      setFeedback({ variant: 'danger', message: error.message });
+      return;
+    }
+
+    setSavingFavorite(false);
+    setFavoriteLabel('');
+    await loadFavorites();
+  }
+
+  async function handleDeleteFavorite(id: string) {
+    await supabase.from('terima_cepat_favorites').delete().eq('id', id);
+    await loadFavorites();
+  }
 
   const validLots = useMemo(
     () => lots.filter((lot) => lot.product_id && Number(lot.qty_kg) > 0 && Number(lot.buy_price_per_kg) > 0),
@@ -159,6 +228,32 @@ export function TerimaCepatPage() {
         <AlertBanner variant={feedback.variant} title={feedback.variant === 'success' ? 'Berhasil' : 'Gagal menyimpan'}>
           {feedback.message}
         </AlertBanner>
+      )}
+
+      {favorites.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Papan Favorit</h2>
+          <div className="flex flex-wrap gap-2">
+            {favorites.map((fav) => (
+              <div
+                key={fav.id}
+                className="flex items-center gap-1 rounded-full border border-app-border bg-app-panel py-1 pl-3 pr-1 text-xs text-app-text"
+              >
+                <button type="button" onClick={() => applyFavorite(fav)} className="hover:text-app-accent">
+                  {fav.label}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteFavorite(fav.id)}
+                  className="rounded-full p-1 text-app-muted hover:bg-white/10 hover:text-app-danger"
+                  title="Hapus favorit"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -271,13 +366,56 @@ export function TerimaCepatPage() {
           ))}
         </div>
 
-        <button
-          type="submit"
-          disabled={!isFormValid || submitting}
-          className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
-        >
-          {submitting ? 'Menyimpan...' : 'Simpan Penerimaan'}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="submit"
+            disabled={!isFormValid || submitting}
+            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+          >
+            {submitting ? 'Menyimpan...' : 'Simpan Penerimaan'}
+          </button>
+
+          {!savingFavorite && (
+            <button
+              type="button"
+              onClick={() => {
+                setSavingFavorite(true);
+                setFavoriteLabel('');
+              }}
+              disabled={!supplierId || !siteId || !tankId || !lots[0]?.product_id}
+              className="flex items-center gap-1 text-xs font-medium text-app-muted hover:text-app-accent disabled:opacity-30"
+            >
+              <Star size={14} /> Simpan sebagai Favorit
+            </button>
+          )}
+        </div>
+
+        {savingFavorite && (
+          <div className="flex flex-wrap items-center gap-2 rounded-md border border-app-border p-3">
+            <input
+              type="text"
+              value={favoriteLabel}
+              onChange={(e) => setFavoriteLabel(e.target.value)}
+              placeholder="Nama favorit, mis. Nabil - Banggai - Batu"
+              className={`${inputClass} flex-1`}
+            />
+            <button
+              type="button"
+              onClick={handleSaveFavorite}
+              disabled={!favoriteLabel.trim()}
+              className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+            >
+              Simpan
+            </button>
+            <button
+              type="button"
+              onClick={() => setSavingFavorite(false)}
+              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+            >
+              Batal
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

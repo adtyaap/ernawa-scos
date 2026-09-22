@@ -1170,6 +1170,75 @@ export type Database = {
           },
         ]
       }
+      terima_cepat_favorites: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          product_id: string
+          site_id: string
+          supplier_id: string
+          tank_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          product_id: string
+          site_id: string
+          supplier_id: string
+          tank_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          product_id?: string
+          site_id?: string
+          supplier_id?: string
+          tank_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "terima_cepat_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terima_cepat_favorites_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terima_cepat_favorites_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terima_cepat_favorites_tank_id_fkey"
+            columns: ["tank_id"]
+            isOneToOne: false
+            referencedRelation: "tanks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "terima_cepat_favorites_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_sites: {
         Row: {
           created_at: string
