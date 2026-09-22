@@ -54,7 +54,10 @@ export const NAV_TABS: TabConfig[] = [
     key: 'finance',
     label: 'Finance',
     path: '/finance',
-    submenu: [{ label: 'Piutang & Aging', path: '/finance/piutang' }],
+    submenu: [
+      { label: 'Piutang & Aging', path: '/finance/piutang' },
+      { label: 'Kas Panjar', path: '/finance/kas-panjar' },
+    ],
   },
   {
     key: 'admin',

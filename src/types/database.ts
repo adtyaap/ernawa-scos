@@ -137,9 +137,10 @@ export type Database = {
           amount: number
           category: string
           created_at: string
-          created_by: string | null
+          created_by: string
           event_at: string
           id: string
+          pic_user_id: string
           ref_id: string | null
           ref_type: string | null
           reversal_of: string | null
@@ -149,9 +150,10 @@ export type Database = {
           amount: number
           category: string
           created_at?: string
-          created_by?: string | null
+          created_by: string
           event_at: string
           id?: string
+          pic_user_id: string
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
@@ -161,9 +163,10 @@ export type Database = {
           amount?: number
           category?: string
           created_at?: string
-          created_by?: string | null
+          created_by?: string
           event_at?: string
           id?: string
+          pic_user_id?: string
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
@@ -173,6 +176,13 @@ export type Database = {
           {
             foreignKeyName: "cash_ledger_created_by_fkey"
             columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_ledger_pic_user_id_fkey"
+            columns: ["pic_user_id"]
             isOneToOne: false
             referencedRelation: "users"
             referencedColumns: ["id"]
@@ -1186,6 +1196,32 @@ export type Database = {
           },
         ]
       }
+      v_cash_balance: {
+        Row: {
+          balance: number | null
+          pic_name: string | null
+          pic_user_id: string | null
+          site_id: string | null
+          site_name: string | null
+          track: Database["public"]["Enums"]["site_type"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_ledger_pic_user_id_fkey"
+            columns: ["pic_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_ledger_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_cash_ledger_with_track: {
         Row: {
           amount: number | null
@@ -1472,6 +1508,10 @@ export type Database = {
       cancel_delivery: {
         Args: { p_delivery_id: string; p_reason: string }
         Returns: undefined
+      }
+      create_cash_reversal: {
+        Args: { p_ledger_id: string; p_reason: string }
+        Returns: string
       }
       create_delivery_with_allocations: {
         Args: {
