@@ -55,7 +55,7 @@ function formatDateTime(value: string): string {
 // Owner bisa top-up/koreksi siapa pun; Lead/Staf cuma bisa catat
 // pengeluaran/pengembalian MILIK SENDIRI (RLS, bukan cuma UI).
 export function KasPanjarPage() {
-  const { profile, session } = useAuth();
+  const { profile, profileLoading, session } = useAuth();
   const isOwner = profile?.role === 'owner';
   const isInvestor = profile?.role === 'investor';
 
@@ -68,7 +68,10 @@ export function KasPanjarPage() {
 
   const [formSiteId, setFormSiteId] = useState('');
   const [formPicId, setFormPicId] = useState(''); // owner saja
-  const [formCategory, setFormCategory] = useState<Category>(isOwner ? 'topup' : 'expense');
+  // Default 'expense' dulu (valid utk kedua role) -- nilai final ('topup'
+  // utk owner) di-set di effect di bawah setelah profile selesai resolve,
+  // supaya tidak ikut kena bug closure-beku yang sama seperti loadAll().
+  const [formCategory, setFormCategory] = useState<Category>('expense');
   const [formAmount, setFormAmount] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
@@ -105,10 +108,18 @@ export function KasPanjarPage() {
     setLoading(false);
   }
 
+  // Tunggu authContext selesai fetch profile (role) dulu -- kalau tidak,
+  // loadAll() bisa terlanjur jalan dengan isOwner=false (closure beku) saat
+  // profile belum resolve (mis. akses langsung URL / refresh halaman), dan
+  // dropdown PIC owner jadi kosong permanen walau sudah login sebagai owner
+  // (ketahuan lewat uji Playwright end-to-end, tidak muncul kalau navigasi
+  // client-side dari halaman lain karena profile sudah ke-cache duluan).
   useEffect(() => {
+    if (profileLoading) return;
+    setFormCategory(isOwner ? 'topup' : 'expense');
     loadAll();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [profileLoading]);
 
   const myBalances = isOwner ? balances : balances.filter((b) => b.pic_user_id === session?.user.id);
 
