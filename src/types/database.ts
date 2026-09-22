@@ -206,6 +206,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          notes: string | null
           payment_term_days: number | null
           settlement_mode: Database["public"]["Enums"]["settlement_mode"]
           status: string
@@ -215,6 +216,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          notes?: string | null
           payment_term_days?: number | null
           settlement_mode: Database["public"]["Enums"]["settlement_mode"]
           status?: string
@@ -224,6 +226,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          notes?: string | null
           payment_term_days?: number | null
           settlement_mode?: Database["public"]["Enums"]["settlement_mode"]
           status?: string
