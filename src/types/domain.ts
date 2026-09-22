@@ -67,6 +67,27 @@ export interface AvailableBatchLine {
   is_overdue: boolean;
 }
 
+// Hasil RPC get_fefo_risk_report() — migration 0032. Sama seperti
+// AvailableBatchLine tapi lintas-site (site_id/site_name/track ditambahkan,
+// TANPA parameter site) dan HANYA baris is_overdue = true yang dikembalikan
+// (SECURITY INVOKER — RLS batch_lines/batches yang sudah ada otomatis
+// membatasi ke site yang bisa diakses caller, is_overdue selalu true di sini
+// tapi kolomnya tetap disertakan biar konsisten bentuknya dgn AvailableBatchLine).
+export interface FefoRiskRow {
+  batch_line_id: string;
+  site_id: string;
+  site_name: string;
+  track: Track;
+  tank_name: string;
+  product_id: string;
+  product_name: string;
+  balance_kg: number;
+  received_at: string | null;
+  max_holding_hours: number | null;
+  age_hours: number | null;
+  is_overdue: boolean;
+}
+
 // Hasil view v_deliveries_pending_settlement — migration 0009.
 export interface PendingSettlementDelivery {
   delivery_id: string;

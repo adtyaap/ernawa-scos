@@ -38,6 +38,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Serah Terima', path: '/inventory/handover' },
       { label: 'Kelola Tank', path: '/inventory/tank' },
       { label: 'Stok & Mortalitas', path: '/inventory/stok' },
+      { label: 'Laporan Risiko FEFO', path: '/inventory/risiko-fefo' },
       { label: 'Inspeksi Kualitas', path: '/inventory/inspeksi-kualitas' },
       { label: 'Riwayat Penerimaan', path: '/inventory/riwayat' },
       { label: 'Koreksi Ledger', path: '/inventory/koreksi' },

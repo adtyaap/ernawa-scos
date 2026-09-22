@@ -1625,6 +1625,23 @@ export type Database = {
           tank_name: string
         }[]
       }
+      get_fefo_risk_report: {
+        Args: never
+        Returns: {
+          age_hours: number
+          balance_kg: number
+          batch_line_id: string
+          is_overdue: boolean
+          max_holding_hours: number
+          product_id: string
+          product_name: string
+          received_at: string
+          site_id: string
+          site_name: string
+          tank_name: string
+          track: string
+        }[]
+      }
       get_or_create_batch: {
         Args: { p_business_date: string; p_site_id: string; p_tank_id: string }
         Returns: string
