@@ -18,6 +18,7 @@ const SourcePage = lazyPage(() => import('./features/source/SourcePage'), 'Sourc
 const AcuanHargaPage = lazyPage(() => import('./features/source/AcuanHargaPage'), 'AcuanHargaPage');
 const InventoryIndexPage = lazyPage(() => import('./features/inventory/InventoryIndexPage'), 'InventoryIndexPage');
 const TerimaCepatPage = lazyPage(() => import('./features/inventory/TerimaCepatPage'), 'TerimaCepatPage');
+const ImportTerimaCepatPage = lazyPage(() => import('./features/inventory/ImportTerimaCepatPage'), 'ImportTerimaCepatPage');
 const StokMortalitasPage = lazyPage(() => import('./features/inventory/StokMortalitasPage'), 'StokMortalitasPage');
 const InspeksiKualitasPage = lazyPage(() => import('./features/inventory/InspeksiKualitasPage'), 'InspeksiKualitasPage');
 const RiwayatPenerimaanPage = lazyPage(() => import('./features/inventory/RiwayatPenerimaanPage'), 'RiwayatPenerimaanPage');
@@ -48,6 +49,7 @@ export default function App() {
               <Route path="/source/acuan-harga" element={<AcuanHargaPage />} />
               <Route path="/inventory" element={<InventoryIndexPage />} />
               <Route path="/inventory/terima-cepat" element={<TerimaCepatPage />} />
+              <Route path="/inventory/import-terima-cepat" element={<ImportTerimaCepatPage />} />
               <Route path="/inventory/stok" element={<StokMortalitasPage />} />
               <Route path="/inventory/inspeksi-kualitas" element={<InspeksiKualitasPage />} />
               <Route path="/inventory/riwayat" element={<RiwayatPenerimaanPage />} />

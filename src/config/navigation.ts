@@ -26,6 +26,7 @@ export const NAV_TABS: TabConfig[] = [
     path: '/inventory',
     submenu: [
       { label: 'Terima Cepat', path: '/inventory/terima-cepat' },
+      { label: 'Import Terima Cepat', path: '/inventory/import-terima-cepat' },
       { label: 'Stok & Mortalitas', path: '/inventory/stok' },
       { label: 'Inspeksi Kualitas', path: '/inventory/inspeksi-kualitas' },
       { label: 'Riwayat Penerimaan', path: '/inventory/riwayat' },
