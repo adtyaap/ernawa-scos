@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
 import { supabase } from '../../lib/supabaseClient';
+import { useAuth } from '../../lib/authContext';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { formatKg, todayLocalDate } from '../../lib/format';
 import type { AvailableBatchLine, Site, Tank } from '../../types/domain';
@@ -94,6 +95,7 @@ export function HandoverPage() {
          )`,
       )
       .is('received_by', null)
+      .is('cancelled_at', null)
       .order('handed_over_at', { ascending: false });
 
     if (error) {
@@ -305,6 +307,9 @@ export function HandoverPage() {
 }
 
 function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHandover; onConfirmed: () => void }) {
+  const { profile } = useAuth();
+  const isOwner = profile?.role === 'owner';
+
   const [tanks, setTanks] = useState<Tank[]>([]);
   const [toTankId, setToTankId] = useState('');
   const [businessDate, setBusinessDate] = useState(todayLocalDate);
@@ -313,6 +318,10 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
   );
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
+
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelReason, setCancelReason] = useState('');
+  const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   useEffect(() => {
     async function loadTanks() {
@@ -356,15 +365,83 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
     onConfirmed();
   }
 
+  async function handleCancel() {
+    if (!cancelReason.trim() || cancelSubmitting) return;
+    setCancelSubmitting(true);
+    setFeedback(null);
+
+    const { error } = await supabase.rpc('cancel_handover_dispatch', {
+      p_handover_id: handover.id,
+      p_reason: cancelReason.trim(),
+    });
+
+    setCancelSubmitting(false);
+
+    if (error) {
+      setFeedback({ variant: 'danger', message: error.message });
+      return;
+    }
+
+    onConfirmed();
+  }
+
   return (
     <form onSubmit={handleConfirm} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-medium text-app-text">
           {handover.from_site?.name ?? '-'} &rarr; {handover.to_site?.name ?? '-'}
         </p>
-        <p className="text-xs text-app-muted">{new Date(handover.handed_over_at).toLocaleString('id-ID')}</p>
+        <div className="flex items-center gap-2">
+          <p className="text-xs text-app-muted">{new Date(handover.handed_over_at).toLocaleString('id-ID')}</p>
+          {isOwner && !cancelling && (
+            <button
+              type="button"
+              onClick={() => {
+                setCancelling(true);
+                setCancelReason('');
+                setFeedback(null);
+              }}
+              className="rounded px-2 py-1 text-xs font-medium text-app-danger hover:bg-app-danger/10"
+            >
+              Batalkan
+            </button>
+          )}
+        </div>
       </div>
       {handover.notes && <p className="text-xs text-app-muted">Catatan: {handover.notes}</p>}
+
+      {cancelling && (
+        <div className="space-y-2 rounded-md border border-app-danger/40 bg-app-danger/5 p-3">
+          <p className="text-xs text-app-muted">
+            Membatalkan mengembalikan stok sepenuhnya ke site asal (via reversal). Tidak bisa dibatalkan kalau sudah
+            dikonfirmasi.
+          </p>
+          <input
+            type="text"
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            placeholder="Alasan pembatalan (wajib)"
+            className={inputClass}
+          />
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={!cancelReason.trim() || cancelSubmitting}
+              className="rounded-md bg-app-danger px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
+            >
+              {cancelSubmitting ? 'Membatalkan...' : 'Konfirmasi Batalkan'}
+            </button>
+            <button
+              type="button"
+              onClick={() => setCancelling(false)}
+              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
 
       {feedback && (
         <AlertBanner variant={feedback.variant} title={feedback.variant === 'success' ? 'Berhasil' : 'Gagal'}>

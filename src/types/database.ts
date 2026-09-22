@@ -492,6 +492,8 @@ export type Database = {
       }
       handovers: {
         Row: {
+          cancelled_at: string | null
+          cancelled_reason: string | null
           client_id: string
           created_at: string
           from_site_id: string
@@ -506,6 +508,8 @@ export type Database = {
           to_tank_id: string | null
         }
         Insert: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           client_id: string
           created_at?: string
           from_site_id: string
@@ -520,6 +524,8 @@ export type Database = {
           to_tank_id?: string | null
         }
         Update: {
+          cancelled_at?: string | null
+          cancelled_reason?: string | null
           client_id?: string
           created_at?: string
           from_site_id?: string
@@ -1546,6 +1552,10 @@ export type Database = {
       auth_user_role: { Args: never; Returns: string }
       cancel_delivery: {
         Args: { p_delivery_id: string; p_reason: string }
+        Returns: undefined
+      }
+      cancel_handover_dispatch: {
+        Args: { p_handover_id: string; p_reason: string }
         Returns: undefined
       }
       confirm_handover_receipt: {
