@@ -40,6 +40,7 @@ export interface Customer {
   settlement_mode: SettlementMode;
   payment_term_days: number | null;
   status: 'aktif' | 'nonaktif';
+  notes: string | null;
 }
 
 export type UserRole = 'owner' | 'lead_lapangan' | 'staf_lapangan' | 'investor';

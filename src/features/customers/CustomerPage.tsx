@@ -11,9 +11,10 @@ const inputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
 
 // Kolom customers yang relevan untuk MVP ini: name, settlement_mode,
-// payment_term_days (migrations/0001 + 0006). `acceptance_policy` (jsonb)
-// SENGAJA DILEWATI — belum ada kebutuhan konkret soal struktur JSON-nya,
-// ini scope yang ditunda, bukan terlewat.
+// payment_term_days, notes (migrations/0001 + 0006 + 0025). `acceptance_policy`
+// (jsonb) SENGAJA TETAP DILEWATI — itu untuk kriteria terstruktur yang
+// divalidasi sistem, bukan kebutuhan sekarang. `notes` (migration 0025) adalah
+// catatan bebas per customer, murni informasional, TIDAK divalidasi sistem.
 //
 // Tidak ada policy DELETE untuk customers (sama seperti suppliers), jadi
 // status ('aktif'/'nonaktif', migration 0014) adalah pengganti resmi
@@ -31,6 +32,7 @@ export function CustomerPage() {
   const [formName, setFormName] = useState('');
   const [formSettlementMode, setFormSettlementMode] = useState<SettlementMode>('cod');
   const [formPaymentTermDays, setFormPaymentTermDays] = useState('');
+  const [formNotes, setFormNotes] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formFeedback, setFormFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
@@ -41,7 +43,7 @@ export function CustomerPage() {
 
     const { data, error } = await supabase
       .from('customers')
-      .select('id, name, settlement_mode, payment_term_days, status')
+      .select('id, name, settlement_mode, payment_term_days, status, notes')
       .order('name');
 
     if (error) {
@@ -61,6 +63,7 @@ export function CustomerPage() {
     setFormName('');
     setFormSettlementMode('cod');
     setFormPaymentTermDays('');
+    setFormNotes('');
   }
 
   function startEdit(customer: Customer) {
@@ -68,6 +71,7 @@ export function CustomerPage() {
     setFormName(customer.name);
     setFormSettlementMode(customer.settlement_mode);
     setFormPaymentTermDays(customer.payment_term_days ? String(customer.payment_term_days) : '');
+    setFormNotes(customer.notes ?? '');
     setFormFeedback(null);
   }
 
@@ -117,6 +121,7 @@ export function CustomerPage() {
       name: trimmedName,
       settlement_mode: formSettlementMode,
       payment_term_days: paymentTermDays,
+      notes: formNotes.trim() || null,
     };
 
     const { error } = editingId
@@ -185,6 +190,11 @@ export function CustomerPage() {
       key: 'payment_term_days',
       header: 'Termin',
       render: (row) => (row.settlement_mode === 'term' && row.payment_term_days ? `${row.payment_term_days} hari` : '-'),
+    },
+    {
+      key: 'notes',
+      header: 'Catatan',
+      render: (row) => (row.notes ? <span className="line-clamp-2 max-w-xs text-xs text-app-muted">{row.notes}</span> : '-'),
     },
     ...(isOwner
       ? [
@@ -273,6 +283,17 @@ export function CustomerPage() {
               </label>
             )}
           </div>
+
+          <label className="block space-y-1">
+            <span className="text-xs font-medium text-app-muted">Catatan (opsional)</span>
+            <textarea
+              value={formNotes}
+              onChange={(e) => setFormNotes(e.target.value)}
+              rows={2}
+              className={inputClass}
+              placeholder="Mis. hanya menerima size 200-300 ke atas, kemasan khusus, dsb. — informasional, tidak divalidasi sistem"
+            />
+          </label>
 
           <div className="flex gap-2">
             <button
