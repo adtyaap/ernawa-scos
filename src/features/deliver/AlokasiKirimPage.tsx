@@ -28,9 +28,15 @@ function isStrictlyOlder(a: AvailableBatchLine, b: AvailableBatchLine): boolean 
   return new Date(a.received_at).getTime() < new Date(b.received_at).getTime();
 }
 
-// Sesuai pseudocode yang sudah di-approve: setelah menerapkan pilihan user,
-// kalau ADA batch_line yang lebih tua dari salah satu yang dipilih dan
-// masih menyisakan saldo yang tidak diambil -> override FEFO.
+// Setelah menerapkan pilihan user, kalau ADA batch_line PRODUK YANG SAMA
+// lebih tua dari salah satu yang dipilih dan masih menyisakan saldo yang
+// tidak diambil -> override FEFO. Dibandingkan PER PRODUK (migration 0026)
+// — FEFO cuma bermakna dalam satu produk yang sama; membandingkan lintas
+// produk berbeda menghasilkan deteksi override yang salah (positif maupun
+// negatif palsu). Logika ini SENGAJA dicerminkan persis dengan pengecekan
+// server di create_delivery_with_allocations, supaya peringatan yang
+// tampil di sini tidak pernah berbeda dari apa yang akan ditolak/diterima
+// server.
 function detectFefoOverride(lines: AvailableBatchLine[], selections: { batch_line_id: string; qty: number }[]): boolean {
   if (selections.length === 0) return false;
 
@@ -46,6 +52,7 @@ function detectFefoOverride(lines: AvailableBatchLine[], selections: { batch_lin
     const hasOlderUnused = lines.some(
       (candidate) =>
         candidate.batch_line_id !== selectedLine.batch_line_id &&
+        candidate.product_id === selectedLine.product_id &&
         isStrictlyOlder(candidate, selectedLine) &&
         (remaining.get(candidate.batch_line_id) ?? 0) > 0,
     );
