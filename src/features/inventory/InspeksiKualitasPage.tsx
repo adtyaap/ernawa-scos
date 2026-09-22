@@ -23,6 +23,9 @@ interface InspectionRow {
   batch: { business_date: string; site_id: string; tank: { name: string } | null } | null;
 }
 
+const GRADES = ['A', 'B', 'C'] as const;
+type Grade = (typeof GRADES)[number];
+
 const HISTORY_PAGE = 20;
 
 function formatDateTime(value: string): string {
@@ -35,9 +38,8 @@ function formatDate(value: string): string {
 
 // Inspeksi kualitas per batch (quality_inspections.batch_id). Insert-only:
 // koreksi = inspeksi baru, tidak ada UPDATE dari UI (UPDATE cuma owner di
-// RLS, dan riwayat inspeksi sebaiknya tetap utuh). Kolom `grade` di DB
-// berupa teks bebas — skala nilainya belum ditetapkan, jadi form ini tidak
-// memaksakan daftar grade tertentu.
+// RLS, dan riwayat inspeksi sebaiknya tetap utuh). Skala grade A/B/C
+// (migration 0024) ditegakkan lewat CHECK constraint di DB.
 export function InspeksiKualitasPage() {
   const { session } = useAuth();
 
@@ -50,7 +52,7 @@ export function InspeksiKualitasPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [batchId, setBatchId] = useState('');
-  const [grade, setGrade] = useState('');
+  const [grade, setGrade] = useState<Grade | ''>('');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
@@ -112,7 +114,7 @@ export function InspeksiKualitasPage() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!batchId || !grade.trim() || !session?.user.id || submitting) return;
+    if (!batchId || !grade || !session?.user.id || submitting) return;
 
     setSubmitting(true);
     setFeedback(null);
@@ -121,7 +123,7 @@ export function InspeksiKualitasPage() {
       batch_id: batchId,
       inspected_at: new Date().toISOString(),
       inspector_id: session.user.id,
-      grade: grade.trim(),
+      grade,
       notes: notes.trim() || null,
       client_id: crypto.randomUUID(),
     });
@@ -203,13 +205,14 @@ export function InspeksiKualitasPage() {
 
           <label className="block space-y-1">
             <span className="text-xs font-medium text-app-muted">Grade *</span>
-            <input
-              type="text"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              className={inputClass}
-              placeholder="Mis. A"
-            />
+            <select value={grade} onChange={(e) => setGrade(e.target.value as Grade)} className={inputClass}>
+              <option value="">Pilih grade</option>
+              {GRADES.map((g) => (
+                <option key={g} value={g}>
+                  {g}
+                </option>
+              ))}
+            </select>
           </label>
 
           <label className="block space-y-1 sm:col-span-2">
@@ -220,7 +223,7 @@ export function InspeksiKualitasPage() {
 
         <button
           type="submit"
-          disabled={!batchId || !grade.trim() || submitting}
+          disabled={!batchId || !grade || submitting}
           className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
         >
           {submitting ? 'Menyimpan...' : 'Simpan Inspeksi'}
