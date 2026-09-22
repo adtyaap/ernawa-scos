@@ -445,6 +445,8 @@ export type Database = {
           handover_id: string
           id: string
           qty_kg: number
+          qty_kg_received: number | null
+          to_batch_line_id: string | null
         }
         Insert: {
           batch_line_id: string
@@ -452,6 +454,8 @@ export type Database = {
           handover_id: string
           id?: string
           qty_kg: number
+          qty_kg_received?: number | null
+          to_batch_line_id?: string | null
         }
         Update: {
           batch_line_id?: string
@@ -459,6 +463,8 @@ export type Database = {
           handover_id?: string
           id?: string
           qty_kg?: number
+          qty_kg_received?: number | null
+          to_batch_line_id?: string | null
         }
         Relationships: [
           {
@@ -475,6 +481,13 @@ export type Database = {
             referencedRelation: "handovers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "handover_lines_to_batch_line_id_fkey"
+            columns: ["to_batch_line_id"]
+            isOneToOne: false
+            referencedRelation: "batch_lines"
+            referencedColumns: ["id"]
+          },
         ]
       }
       handovers: {
@@ -486,8 +499,11 @@ export type Database = {
           handed_over_at: string
           id: string
           notes: string | null
+          received_at: string | null
+          received_business_date: string | null
           received_by: string | null
           to_site_id: string
+          to_tank_id: string | null
         }
         Insert: {
           client_id: string
@@ -497,8 +513,11 @@ export type Database = {
           handed_over_at: string
           id?: string
           notes?: string | null
+          received_at?: string | null
+          received_business_date?: string | null
           received_by?: string | null
           to_site_id: string
+          to_tank_id?: string | null
         }
         Update: {
           client_id?: string
@@ -508,8 +527,11 @@ export type Database = {
           handed_over_at?: string
           id?: string
           notes?: string | null
+          received_at?: string | null
+          received_business_date?: string | null
           received_by?: string | null
           to_site_id?: string
+          to_tank_id?: string | null
         }
         Relationships: [
           {
@@ -538,6 +560,13 @@ export type Database = {
             columns: ["to_site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "handovers_to_tank_id_fkey"
+            columns: ["to_tank_id"]
+            isOneToOne: false
+            referencedRelation: "tanks"
             referencedColumns: ["id"]
           },
         ]
@@ -866,7 +895,8 @@ export type Database = {
           created_by: string | null
           id: string
           site_id: string
-          supplier_id: string
+          source_handover_id: string | null
+          supplier_id: string | null
           transaction_date: string
         }
         Insert: {
@@ -874,7 +904,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           site_id: string
-          supplier_id: string
+          source_handover_id?: string | null
+          supplier_id?: string | null
           transaction_date: string
         }
         Update: {
@@ -882,7 +913,8 @@ export type Database = {
           created_by?: string | null
           id?: string
           site_id?: string
-          supplier_id?: string
+          source_handover_id?: string | null
+          supplier_id?: string | null
           transaction_date?: string
         }
         Relationships: [
@@ -898,6 +930,13 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_transactions_source_handover_id_fkey"
+            columns: ["source_handover_id"]
+            isOneToOne: false
+            referencedRelation: "handovers"
             referencedColumns: ["id"]
           },
           {
@@ -1509,6 +1548,15 @@ export type Database = {
         Args: { p_delivery_id: string; p_reason: string }
         Returns: undefined
       }
+      confirm_handover_receipt: {
+        Args: {
+          p_business_date: string
+          p_handover_id: string
+          p_lines: Json
+          p_to_tank_id: string
+        }
+        Returns: undefined
+      }
       create_cash_reversal: {
         Args: { p_ledger_id: string; p_reason: string }
         Returns: string
@@ -1519,6 +1567,16 @@ export type Database = {
           p_demand_id: string
           p_override_reason?: string
           p_site_id: string
+        }
+        Returns: string
+      }
+      create_handover_dispatch: {
+        Args: {
+          p_client_id?: string
+          p_from_site_id: string
+          p_lines: Json
+          p_notes?: string
+          p_to_site_id: string
         }
         Returns: string
       }
