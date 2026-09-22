@@ -210,6 +210,103 @@ export type Database = {
           },
         ]
       }
+      cash_reconciliations: {
+        Row: {
+          adjustment_ledger_id: string | null
+          approval_reason: string | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          notes: string | null
+          period_end_date: string
+          physical_amount: number
+          pic_user_id: string
+          site_id: string
+          status: string
+          system_balance: number
+          variance: number
+        }
+        Insert: {
+          adjustment_ledger_id?: string | null
+          approval_reason?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by: string
+          id?: string
+          notes?: string | null
+          period_end_date: string
+          physical_amount: number
+          pic_user_id: string
+          site_id: string
+          status?: string
+          system_balance: number
+          variance: number
+        }
+        Update: {
+          adjustment_ledger_id?: string | null
+          approval_reason?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          notes?: string | null
+          period_end_date?: string
+          physical_amount?: number
+          pic_user_id?: string
+          site_id?: string
+          status?: string
+          system_balance?: number
+          variance?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cash_reconciliations_adjustment_ledger_id_fkey"
+            columns: ["adjustment_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "cash_ledger"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_reconciliations_adjustment_ledger_id_fkey"
+            columns: ["adjustment_ledger_id"]
+            isOneToOne: false
+            referencedRelation: "v_cash_ledger_with_track"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_reconciliations_approved_by_fkey"
+            columns: ["approved_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_reconciliations_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_reconciliations_pic_user_id_fkey"
+            columns: ["pic_user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "cash_reconciliations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           acceptance_policy: Json
@@ -1618,6 +1715,14 @@ export type Database = {
       }
     }
     Functions: {
+      approve_cash_reconciliation: {
+        Args: {
+          p_approve: boolean
+          p_reason?: string
+          p_reconciliation_id: string
+        }
+        Returns: undefined
+      }
       auth_user_role: { Args: never; Returns: string }
       cancel_delivery: {
         Args: { p_delivery_id: string; p_reason: string }
@@ -1635,6 +1740,15 @@ export type Database = {
           p_to_tank_id: string
         }
         Returns: undefined
+      }
+      create_cash_reconciliation: {
+        Args: {
+          p_notes?: string
+          p_period_end_date: string
+          p_physical_amount: number
+          p_site_id: string
+        }
+        Returns: string
       }
       create_cash_reversal: {
         Args: { p_ledger_id: string; p_reason: string }

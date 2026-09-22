@@ -37,6 +37,7 @@ const SettlementPage = lazyPage(() => import('./features/deliver/SettlementPage'
 const FinancePage = lazyPage(() => import('./features/finance/FinancePage'), 'FinancePage');
 const PiutangPage = lazyPage(() => import('./features/finance/PiutangPage'), 'PiutangPage');
 const KasPanjarPage = lazyPage(() => import('./features/finance/KasPanjarPage'), 'KasPanjarPage');
+const RekonsiliasiKasPage = lazyPage(() => import('./features/finance/RekonsiliasiKasPage'), 'RekonsiliasiKasPage');
 const GantiKatasandiPage = lazyPage(() => import('./features/account/GantiKatasandiPage'), 'GantiKatasandiPage');
 const ManajemenUserPage = lazyPage(() => import('./features/admin/ManajemenUserPage'), 'ManajemenUserPage');
 const AuditLogPage = lazyPage(() => import('./features/admin/AuditLogPage'), 'AuditLogPage');
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="/finance" element={<FinancePage />} />
               <Route path="/finance/piutang" element={<PiutangPage />} />
               <Route path="/finance/kas-panjar" element={<KasPanjarPage />} />
+              <Route path="/finance/rekonsiliasi-kas" element={<RekonsiliasiKasPage />} />
               <Route path="/akun/katasandi" element={<GantiKatasandiPage />} />
               <Route path="/admin" element={<ComingSoonPage title="Admin" />} />
               <Route path="/admin/user" element={<ManajemenUserPage />} />

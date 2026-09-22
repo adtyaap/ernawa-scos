@@ -69,6 +69,7 @@ export const NAV_TABS: TabConfig[] = [
     submenu: [
       { label: 'Piutang & Aging', path: '/finance/piutang' },
       { label: 'Kas Panjar', path: '/finance/kas-panjar' },
+      { label: 'Rekonsiliasi Kas', path: '/finance/rekonsiliasi-kas' },
     ],
   },
   {
