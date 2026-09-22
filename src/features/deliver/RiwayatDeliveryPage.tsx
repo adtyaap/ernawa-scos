@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge, type BadgeTone } from '../../components/shared/StatusBadge';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
-import { formatCurrency, formatKg, localDayEndISO, localDayStartISO } from '../../lib/format';
+import { formatCurrency, formatKg, localDayEndISO, localDayStartISO, todayLocalDate } from '../../lib/format';
+import { downloadCsv } from '../../lib/exportCsv';
 import type { Site, Track } from '../../types/domain';
 
 const inputClass =
@@ -156,6 +158,25 @@ export function RiwayatDeliveryPage() {
     bucket.actualKg += Number(row.actual_weight_kg ?? 0);
   }
 
+  function handleExport() {
+    downloadCsv(
+      `riwayat-delivery-${todayLocalDate()}.csv`,
+      rows,
+      [
+        { header: 'Dibuat', value: (row) => row.created_at },
+        { header: 'Site', value: (row) => row.site?.name ?? '-' },
+        { header: 'Track', value: (row) => row.site?.type ?? '-' },
+        { header: 'Customer', value: (row) => row.demand?.customer?.name ?? 'Spot sale' },
+        { header: 'Produk', value: (row) => row.demand?.product?.name ?? '-' },
+        { header: 'Rencana (kg)', value: (row) => Number(row.planned_kg) },
+        { header: 'Timbang Aktual (kg)', value: (row) => (row.actual_weight_kg === null ? '' : Number(row.actual_weight_kg)) },
+        { header: 'Mode Settlement', value: (row) => firstSettlement(row)?.mode ?? '-' },
+        { header: 'Jumlah Settlement (Rp)', value: (row) => (firstSettlement(row) ? Number(firstSettlement(row)!.amount) : '') },
+        { header: 'Status', value: (row) => statusOf(row).label },
+      ],
+    );
+  }
+
   const columns: DataTableColumn<DeliveryRow>[] = [
     { key: 'created_at', header: 'Dibuat', render: (row) => formatDateTime(row.created_at) },
     {
@@ -265,11 +286,21 @@ export function RiwayatDeliveryPage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-app-text">Deliver &gt; Riwayat Delivery</h1>
-        <p className="text-sm text-app-muted">
-          Status setiap delivery dari alokasi sampai lunas, terbaru di atas.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-app-text">Deliver &gt; Riwayat Delivery</h1>
+          <p className="text-sm text-app-muted">
+            Status setiap delivery dari alokasi sampai lunas, terbaru di atas.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={rows.length === 0}
+          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+        >
+          <Download size={14} /> Unduh CSV
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-3">

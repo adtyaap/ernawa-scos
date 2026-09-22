@@ -535,6 +535,35 @@ export type Database = {
           },
         ]
       }
+      finance_targets: {
+        Row: {
+          margin_target_pct: number
+          track: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          margin_target_pct: number
+          track: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          margin_target_pct?: number
+          track?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_targets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       handover_lines: {
         Row: {
           batch_line_id: string

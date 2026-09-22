@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { AlertBanner } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
-import { formatCurrency, formatKg } from '../../lib/format';
+import { formatCurrency, formatKg, todayLocalDate } from '../../lib/format';
+import { downloadCsv } from '../../lib/exportCsv';
 import type { Site, Track } from '../../types/domain';
 
 const inputClass =
@@ -143,6 +145,35 @@ export function RiwayatPenerimaanPage() {
     bucket.value += totals.value;
   }
 
+  function handleExport() {
+    const flat = rows.flatMap((row) =>
+      row.lots.map((lot) => ({
+        tanggal: row.transaction_date,
+        site: row.site?.name ?? '-',
+        track: row.site?.type ?? '-',
+        supplier: row.supplier?.name ?? '-',
+        produk: lot.product?.name ?? '-',
+        qty_kg: Number(lot.qty_kg),
+        harga_per_kg: Number(lot.buy_price_per_kg),
+        nilai: Number(lot.qty_kg) * Number(lot.buy_price_per_kg),
+        status: reversedLotIds.has(lot.id) ? 'Dikoreksi' : 'Berlaku',
+        dicatat_oleh: row.creator?.full_name ?? '-',
+      })),
+    );
+    downloadCsv(`riwayat-penerimaan-${todayLocalDate()}.csv`, flat, [
+      { header: 'Tanggal', value: (r) => r.tanggal },
+      { header: 'Site', value: (r) => r.site },
+      { header: 'Track', value: (r) => r.track },
+      { header: 'Supplier', value: (r) => r.supplier },
+      { header: 'Produk', value: (r) => r.produk },
+      { header: 'Qty (kg)', value: (r) => r.qty_kg },
+      { header: 'Harga/kg (Rp)', value: (r) => r.harga_per_kg },
+      { header: 'Nilai (Rp)', value: (r) => r.nilai },
+      { header: 'Status', value: (r) => r.status },
+      { header: 'Dicatat oleh', value: (r) => r.dicatat_oleh },
+    ]);
+  }
+
   const columns: DataTableColumn<ReceivingRow>[] = [
     { key: 'transaction_date', header: 'Tanggal Terima', render: (row) => formatDate(row.transaction_date) },
     {
@@ -191,9 +222,19 @@ export function RiwayatPenerimaanPage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-app-text">Inventory &gt; Riwayat Penerimaan</h1>
-        <p className="text-sm text-app-muted">Daftar penerimaan dari supplier, terbaru di atas.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-app-text">Inventory &gt; Riwayat Penerimaan</h1>
+          <p className="text-sm text-app-muted">Daftar penerimaan dari supplier, terbaru di atas.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={rows.length === 0}
+          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+        >
+          <Download size={14} /> Unduh CSV
+        </button>
       </div>
 
       <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-3">

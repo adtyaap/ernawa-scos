@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
+import { Download } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { formatCurrency } from '../../lib/format';
+import { formatCurrency, todayLocalDate } from '../../lib/format';
+import { downloadCsv } from '../../lib/exportCsv';
 import type { SettlementAgingRow } from '../../types/domain';
 
 // Baca dari v_settlements_aging (migration 0009), filter settled_at IS NULL
@@ -78,6 +80,15 @@ export function PiutangPage() {
     await loadAging();
   }
 
+  function handleExport() {
+    downloadCsv(`piutang-aging-${todayLocalDate()}.csv`, rows, [
+      { header: 'Customer', value: (row) => row.customer_name },
+      { header: 'Jumlah (Rp)', value: (row) => row.amount },
+      { header: 'Jatuh Tempo', value: (row) => row.due_date },
+      { header: 'Sisa Hari', value: (row) => row.days_until_due },
+    ]);
+  }
+
   const columns: DataTableColumn<SettlementAgingRow>[] = [
     { key: 'customer_name', header: 'Customer' },
     { key: 'amount', header: 'Jumlah', render: (row) => formatCurrency(row.amount) },
@@ -129,9 +140,19 @@ export function PiutangPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold text-app-text">Finance &gt; Piutang &amp; Aging</h1>
-        <p className="text-sm text-app-muted">Settlement mode termin yang belum lunas, diurutkan paling mendesak.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-xl font-semibold text-app-text">Finance &gt; Piutang &amp; Aging</h1>
+          <p className="text-sm text-app-muted">Settlement mode termin yang belum lunas, diurutkan paling mendesak.</p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExport}
+          disabled={rows.length === 0}
+          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+        >
+          <Download size={14} /> Unduh CSV
+        </button>
       </div>
 
       {feedback && (
