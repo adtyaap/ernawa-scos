@@ -73,6 +73,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Rekonsiliasi Kas', path: '/finance/rekonsiliasi-kas' },
       { label: 'Kas & Bank Perusahaan', path: '/finance/kas-bank' },
       { label: 'Anggaran vs Realisasi', path: '/finance/anggaran-realisasi' },
+      { label: 'Kelola Kategori Opex', path: '/finance/kategori-opex' },
     ],
   },
   {

@@ -51,7 +51,13 @@ interface LedgerRow {
   event_at: string;
   reversal_of: string | null;
   created_by: string;
+  opex_category_id: string | null;
   poster: { full_name: string } | null;
+}
+
+interface OpexCategoryOption {
+  id: string;
+  name: string;
 }
 
 function formatDateTime(value: string): string {
@@ -71,11 +77,13 @@ export function KasBankPerusahaanPage() {
   const isInvestor = profile?.role === 'investor';
 
   const [rows, setRows] = useState<LedgerRow[]>([]);
+  const [opexCategories, setOpexCategories] = useState<OpexCategoryOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [formTrack, setFormTrack] = useState<Track>('trading');
   const [formCategory, setFormCategory] = useState<Category>('opex');
+  const [formOpexCategoryId, setFormOpexCategoryId] = useState('');
   const [formAmount, setFormAmount] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -88,18 +96,24 @@ export function KasBankPerusahaanPage() {
     setLoading(true);
     setLoadError(null);
 
-    const { data, error } = isOwner
-      ? await supabase
-          .from('company_cash_ledger')
-          .select('id, track, amount, category, description, event_at, reversal_of, created_by, poster:users!company_cash_ledger_created_by_fkey(full_name)')
-          .order('event_at', { ascending: false })
-      : await supabase.rpc('investor_company_cash_ledger');
+    const [{ data, error }, { data: catData }] = await Promise.all([
+      isOwner
+        ? supabase
+            .from('company_cash_ledger')
+            .select(
+              'id, track, amount, category, description, event_at, reversal_of, created_by, opex_category_id, poster:users!company_cash_ledger_created_by_fkey(full_name)',
+            )
+            .order('event_at', { ascending: false })
+        : supabase.rpc('investor_company_cash_ledger'),
+      supabase.from('opex_categories').select('id, name').order('name'),
+    ]);
 
     if (error) {
       setLoadError(error.message);
     } else {
       setRows((data as unknown as LedgerRow[]) ?? []);
     }
+    setOpexCategories((catData as OpexCategoryOption[]) ?? []);
     setLoading(false);
   }
 
@@ -113,6 +127,7 @@ export function KasBankPerusahaanPage() {
     event.preventDefault();
     const amountNum = Number(formAmount);
     if (!amountNum || submitting || !session?.user.id) return;
+    if (formCategory === 'opex' && !formOpexCategoryId) return;
 
     const signedAmount = Math.abs(amountNum) * CATEGORY_DIRECTION[formCategory];
 
@@ -122,6 +137,7 @@ export function KasBankPerusahaanPage() {
     const { error } = await supabase.from('company_cash_ledger').insert({
       track: formTrack,
       category: formCategory,
+      opex_category_id: formCategory === 'opex' ? formOpexCategoryId : null,
       amount: signedAmount,
       description: formDescription.trim() || null,
       created_by: session.user.id,
@@ -138,6 +154,7 @@ export function KasBankPerusahaanPage() {
     setFeedback({ variant: 'success', message: `${CATEGORY_LABEL[formCategory]} ${formatCurrency(Math.abs(amountNum))} berhasil dicatat.` });
     setFormAmount('');
     setFormDescription('');
+    setFormOpexCategoryId('');
     await loadAll();
   }
 
@@ -162,10 +179,23 @@ export function KasBankPerusahaanPage() {
   }
 
   const reversedIds = new Set(rows.filter((r) => r.reversal_of).map((r) => r.reversal_of as string));
+  const opexCategoryNameById = new Map(opexCategories.map((c) => [c.id, c.name]));
 
   const balancePerTrack: Record<Track, number> = { trading: 0, budidaya: 0 };
   for (const r of rows) balancePerTrack[r.track] += r.amount;
   const balanceTotal = balancePerTrack.trading + balancePerTrack.budidaya;
+
+  // Breakdown opex per kategori (net, termasuk reversal -- amount opex
+  // selalu negatif, dibalik jadi positif utk ditampilkan sbg "dibelanjakan").
+  const opexByCategory = new Map<string, number>();
+  for (const r of rows) {
+    if (r.category !== 'opex') continue;
+    const label = (r.opex_category_id && opexCategoryNameById.get(r.opex_category_id)) || 'Tanpa kategori';
+    opexByCategory.set(label, (opexByCategory.get(label) ?? 0) - r.amount);
+  }
+  const opexBreakdownRows = Array.from(opexByCategory.entries())
+    .filter(([, total]) => total !== 0)
+    .sort((a, b) => b[1] - a[1]);
 
   const historyColumns: DataTableColumn<LedgerRow>[] = [
     { key: 'event_at', header: 'Waktu', render: (row) => formatDateTime(row.event_at) },
@@ -185,6 +215,11 @@ export function KasBankPerusahaanPage() {
       ),
     },
     { key: 'amount', header: 'Jumlah', render: (row) => formatCurrency(row.amount) },
+    {
+      key: 'opex_category',
+      header: 'Kategori Opex',
+      render: (row) => (row.category === 'opex' && row.opex_category_id ? opexCategoryNameById.get(row.opex_category_id) ?? '-' : '-'),
+    },
     { key: 'description', header: 'Keterangan', render: (row) => row.description ?? '-' },
     { key: 'poster', header: 'Dicatat oleh', render: (row) => row.poster?.full_name ?? '-' },
     ...(isOwner
@@ -302,7 +337,14 @@ export function KasBankPerusahaanPage() {
             </label>
             <label className="block space-y-1">
               <span className="text-xs font-medium text-app-muted">Jenis *</span>
-              <select value={formCategory} onChange={(e) => setFormCategory(e.target.value as Category)} className={inputClass}>
+              <select
+                value={formCategory}
+                onChange={(e) => {
+                  setFormCategory(e.target.value as Category);
+                  setFormOpexCategoryId('');
+                }}
+                className={inputClass}
+              >
                 {MANUAL_CATEGORIES.map((c) => (
                   <option key={c} value={c}>
                     {CATEGORY_LABEL[c]}
@@ -310,6 +352,22 @@ export function KasBankPerusahaanPage() {
                 ))}
               </select>
             </label>
+            {formCategory === 'opex' && (
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-app-muted">Kategori Opex *</span>
+                <select value={formOpexCategoryId} onChange={(e) => setFormOpexCategoryId(e.target.value)} className={inputClass}>
+                  <option value="">Pilih kategori</option>
+                  {opexCategories.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {opexCategories.length === 0 && (
+                  <span className="text-xs text-app-danger">Belum ada kategori opex — tambah dulu di Kelola Kategori Opex.</span>
+                )}
+              </label>
+            )}
             <label className="block space-y-1">
               <span className="text-xs font-medium text-app-muted">Jumlah (Rp) *</span>
               <input
@@ -335,12 +393,26 @@ export function KasBankPerusahaanPage() {
           </div>
           <button
             type="submit"
-            disabled={submitting || !formAmount}
+            disabled={submitting || !formAmount || (formCategory === 'opex' && !formOpexCategoryId)}
             className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
           >
             {submitting ? 'Menyimpan...' : 'Simpan'}
           </button>
         </form>
+      )}
+
+      {opexBreakdownRows.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-app-text">Opex per Kategori</h2>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {opexBreakdownRows.map(([label, total]) => (
+              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel px-4 py-2">
+                <span className="text-sm text-app-text">{label}</span>
+                <span className="text-sm font-semibold text-app-text">{formatCurrency(total)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       <div className="space-y-2">

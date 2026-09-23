@@ -316,6 +316,7 @@ export type Database = {
           description: string | null
           event_at: string
           id: string
+          opex_category_id: string | null
           ref_id: string | null
           ref_type: string | null
           reversal_of: string | null
@@ -329,6 +330,7 @@ export type Database = {
           description?: string | null
           event_at?: string
           id?: string
+          opex_category_id?: string | null
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
@@ -342,6 +344,7 @@ export type Database = {
           description?: string | null
           event_at?: string
           id?: string
+          opex_category_id?: string | null
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
@@ -353,6 +356,13 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_cash_ledger_opex_category_id_fkey"
+            columns: ["opex_category_id"]
+            isOneToOne: false
+            referencedRelation: "opex_categories"
             referencedColumns: ["id"]
           },
           {
@@ -933,6 +943,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      opex_categories: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
       }
       price_today: {
         Row: {
@@ -1991,6 +2019,7 @@ export type Database = {
           description: string | null
           event_at: string
           id: string
+          opex_category_id: string | null
           ref_id: string | null
           ref_type: string | null
           reversal_of: string | null
