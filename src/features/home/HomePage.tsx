@@ -7,8 +7,15 @@ import { KPICard } from '../../components/shared/KPICard';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
 import { AlertBanner } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import { formatKg, formatNumber } from '../../lib/format';
-import type { AvailableBatchLine, Site, Track } from '../../types/domain';
+import { formatCurrency, formatKg, formatNumber } from '../../lib/format';
+import type { AvailableBatchLine, FefoRiskRow, SettlementAgingRow, Site, Track, TradingDeliveryMargin } from '../../types/domain';
+
+interface ActiveAlert {
+  id: string;
+  severity: 'kritis' | 'peringatan';
+  title: string;
+  body: string;
+}
 
 interface SiteStockRow {
   site: Site;
@@ -30,9 +37,16 @@ const TRACKS: { key: Track; label: string }[] = [
 
 // Dashboard operasional dari data nyata. Stok dihitung dari ledger lewat RPC
 // get_available_batch_lines per site (CLAUDE.md #2) dan SELALU dipisah per
-// track — tidak ada angka gabungan trading+budidaya (CLAUDE.md #1). Sengaja
-// tidak menampilkan nilai uang (piutang/margin): itu tugas halaman Finance
-// yang sudah memisahkan track secara eksplisit.
+// track — tidak ada angka gabungan trading+budidaya (CLAUDE.md #1).
+//
+// [REVISI] Sebelumnya sengaja tidak menampilkan nilai uang sama sekali
+// ("itu tugas halaman Finance"). Diubah atas keputusan eksplisit user saat
+// membangun Panel Peringatan Aktif (dibandingkan thd artifact lama "Lobster
+// Trading Control Tower") -- piutang lewat tempo & margin di bawah target
+// TERMASUK nominal Rp ditampilkan di sini juga, supaya jadi satu tempat
+// lihat SEMUA yang butuh perhatian tanpa buka banyak halaman. Tetap per
+// track (tidak melanggar aturan #1), detail lengkap tetap ada di halaman
+// Finance/Piutang masing-masing.
 export function HomePage() {
   const { profile } = useAuth();
   // Investor hanya punya akses Finance (migration 0022); dashboard operasional
@@ -45,6 +59,9 @@ function HomeDashboard() {
   const [rows, setRows] = useState<SiteStockRow[]>([]);
   const [openDemands, setOpenDemands] = useState<number | null>(null);
   const [awaitingWeigh, setAwaitingWeigh] = useState<number | null>(null);
+  const [fefoRisk, setFefoRisk] = useState<FefoRiskRow[]>([]);
+  const [overdueSettlements, setOverdueSettlements] = useState<SettlementAgingRow[]>([]);
+  const [marginAlerts, setMarginAlerts] = useState<ActiveAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +79,7 @@ function HomeDashboard() {
       }
       const sites = (siteData as Site[]) ?? [];
 
-      const [stockResults, demandResult, deliveryResult] = await Promise.all([
+      const [stockResults, demandResult, deliveryResult, fefoResult, agingResult, marginResult, targetResult] = await Promise.all([
         Promise.all(sites.map((site) => supabase.rpc('get_available_batch_lines', { p_site_id: site.id }))),
         supabase.from('demands').select('id', { count: 'exact', head: true }).in('status', ['open', 'partial']),
         supabase
@@ -70,6 +87,10 @@ function HomeDashboard() {
           .select('id', { count: 'exact', head: true })
           .is('actual_weight_kg', null)
           .is('cancelled_at', null),
+        supabase.rpc('get_fefo_risk_report'),
+        supabase.from('v_settlements_aging').select('*').is('settled_at', null).lt('days_until_due', 0),
+        supabase.from('v_trading_delivery_margin').select('*'),
+        supabase.from('finance_targets').select('track, margin_target_pct'),
       ]);
 
       if (!active) return;
@@ -92,6 +113,31 @@ function HomeDashboard() {
       );
       setOpenDemands(demandResult.count ?? 0);
       setAwaitingWeigh(deliveryResult.count ?? 0);
+      setFefoRisk((fefoResult.data as FefoRiskRow[]) ?? []);
+      setOverdueSettlements((agingResult.data as SettlementAgingRow[]) ?? []);
+
+      // Margin di bawah target, per track -- cuma trading yang punya view
+      // sumber (v_trading_delivery_margin), budidaya belum beroperasi jadi
+      // tidak pernah menghasilkan alert (bukan bug, konsisten dgn placeholder
+      // "belum ada data operasional" di halaman Finance).
+      const marginRows = (marginResult.data as TradingDeliveryMargin[]) ?? [];
+      const targets = (targetResult.data as { track: string; margin_target_pct: number }[]) ?? [];
+      const totalRevenue = marginRows.reduce((sum, r) => sum + r.revenue, 0);
+      const totalMargin = marginRows.reduce((sum, r) => sum + r.margin, 0);
+      const tradingMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : null;
+      const tradingTarget = targets.find((t) => t.track === 'trading')?.margin_target_pct ?? null;
+      const newMarginAlerts: ActiveAlert[] = [];
+      if (tradingMarginPct !== null && tradingTarget !== null && tradingMarginPct < tradingTarget) {
+        const gap = tradingMarginPct - tradingTarget;
+        newMarginAlerts.push({
+          id: 'margin-trading',
+          severity: gap < -5 ? 'kritis' : 'peringatan',
+          title: 'Margin Trading di bawah target',
+          body: `Realisasi ${formatNumber(Math.round(tradingMarginPct * 10) / 10)}% vs target ${formatNumber(tradingTarget)}% (gap ${formatNumber(Math.round(gap * 10) / 10)}pp).`,
+        });
+      }
+      setMarginAlerts(newMarginAlerts);
+
       setLoading(false);
     }
 
@@ -113,6 +159,35 @@ function HomeDashboard() {
   }
 
   const overdueRows = rows.filter((row) => row.overdueCount > 0);
+
+  // Panel Peringatan Aktif: gabungan batch tertahan (get_fefo_risk_report),
+  // piutang lewat tempo (v_settlements_aging), dan margin di bawah target
+  // (v_trading_delivery_margin + finance_targets) -- tiga sumber data yang
+  // sebelumnya tersebar di 3 halaman terpisah (FefoRiskReportPage,
+  // PiutangPage, FinancePage). Severity 'kritis' vs 'peringatan' murni
+  // heuristik tampilan (bukan nilai baru di DB): batch >2x ambang holding,
+  // piutang >60 hari lewat tempo, margin gap >5pp.
+  const fefoAlerts: ActiveAlert[] = fefoRisk.map((row) => {
+    const ratio = row.max_holding_hours && row.age_hours ? row.age_hours / row.max_holding_hours : 0;
+    return {
+      id: `fefo-${row.batch_line_id}`,
+      severity: ratio > 2 ? 'kritis' : 'peringatan',
+      title: `${row.product_name} tertahan ${formatNumber(Math.round(row.age_hours ?? 0))} jam`,
+      body: `${row.site_name} (${row.tank_name}) — sisa ${formatKg(row.balance_kg)}, ambang ${row.max_holding_hours} jam.`,
+    };
+  });
+  const arAlerts: ActiveAlert[] = overdueSettlements.map((row) => {
+    const overdueDays = row.days_until_due !== null ? Math.abs(row.days_until_due) : 0;
+    return {
+      id: `ar-${row.settlement_id}`,
+      severity: overdueDays > 60 ? 'kritis' : 'peringatan',
+      title: `Piutang lewat tempo ${formatNumber(overdueDays)} hari`,
+      body: `${row.customer_name} — ${formatCurrency(row.amount)}.`,
+    };
+  });
+  const activeAlerts = [...fefoAlerts, ...arAlerts, ...marginAlerts].sort((a, b) =>
+    a.severity === b.severity ? 0 : a.severity === 'kritis' ? -1 : 1,
+  );
 
   const columns: DataTableColumn<SiteStockRow>[] = [
     { key: 'site', header: 'Site', render: (row) => row.site.name },
@@ -152,6 +227,39 @@ function HomeDashboard() {
           {error}
         </AlertBanner>
       )}
+
+      <div className="space-y-2">
+        <h2 className="flex items-center justify-between text-sm font-semibold text-app-muted">
+          <span className="flex items-center gap-2">
+            <AlertTriangle size={14} /> Peringatan Aktif
+          </span>
+          {!loading && <span className="text-xs font-normal">{activeAlerts.length} item</span>}
+        </h2>
+        {loading ? (
+          <p className="text-xs text-app-muted">Memuat...</p>
+        ) : activeAlerts.length === 0 ? (
+          <div className="rounded-lg border border-app-border bg-app-panel px-4 py-3 text-xs text-app-muted">
+            Tidak ada peringatan aktif saat ini.
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            {activeAlerts.map((alert) => (
+              <div
+                key={alert.id}
+                className={`rounded-lg border-l-4 bg-app-panel px-3 py-2 ${
+                  alert.severity === 'kritis' ? 'border-l-app-danger' : 'border-l-app-warning'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <StatusBadge label={alert.severity === 'kritis' ? 'Kritis' : 'Peringatan'} tone={alert.severity === 'kritis' ? 'danger' : 'warning'} />
+                  <span className="text-xs font-semibold text-app-text">{alert.title}</span>
+                </div>
+                <p className="mt-1 text-xs text-app-muted">{alert.body}</p>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {overdueRows.length > 0 && (
         <AlertBanner variant="warning" title="Stok melewati ambang holding">
