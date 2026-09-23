@@ -1,5 +1,5 @@
-// Dihasilkan dari skema Supabase (generate_typescript_types). JANGAN diedit manual:
-// generate ulang setiap ada migration baru supaya tetap sinkron dengan migrations/.
+// Dihasilkan dari skema Supabase lewat generate_typescript_types -- JANGAN diedit manual, generate ulang setiap kali menambah migration.
+
 export type Json =
   | string
   | number
@@ -303,6 +303,63 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      company_cash_ledger: {
+        Row: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          event_at: string
+          id: string
+          ref_id: string | null
+          ref_type: string | null
+          reversal_of: string | null
+          track: string
+        }
+        Insert: {
+          amount: number
+          category: string
+          created_at?: string
+          created_by: string
+          description?: string | null
+          event_at?: string
+          id?: string
+          ref_id?: string | null
+          ref_type?: string | null
+          reversal_of?: string | null
+          track: string
+        }
+        Update: {
+          amount?: number
+          category?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          event_at?: string
+          id?: string
+          ref_id?: string | null
+          ref_type?: string | null
+          reversal_of?: string | null
+          track?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_cash_ledger_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "company_cash_ledger_reversal_of_fkey"
+            columns: ["reversal_of"]
+            isOneToOne: false
+            referencedRelation: "company_cash_ledger"
             referencedColumns: ["id"]
           },
         ]
@@ -1786,6 +1843,10 @@ export type Database = {
         Args: { p_ledger_id: string; p_reason: string }
         Returns: string
       }
+      create_company_cash_reversal: {
+        Args: { p_id: string; p_reason: string }
+        Returns: string
+      }
       create_delivery_with_allocations: {
         Args: {
           p_allocations: Json
@@ -1877,6 +1938,28 @@ export type Database = {
           product_name: string
           total_received_kg: number
         }[]
+      }
+      investor_company_cash_ledger: {
+        Args: never
+        Returns: {
+          amount: number
+          category: string
+          created_at: string
+          created_by: string
+          description: string | null
+          event_at: string
+          id: string
+          ref_id: string | null
+          ref_type: string | null
+          reversal_of: string | null
+          track: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "company_cash_ledger"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       investor_settlements_aging: {
         Args: never

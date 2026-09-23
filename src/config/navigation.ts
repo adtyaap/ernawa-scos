@@ -71,6 +71,7 @@ export const NAV_TABS: TabConfig[] = [
       { label: 'Piutang & Aging', path: '/finance/piutang' },
       { label: 'Kas Panjar', path: '/finance/kas-panjar' },
       { label: 'Rekonsiliasi Kas', path: '/finance/rekonsiliasi-kas' },
+      { label: 'Kas & Bank Perusahaan', path: '/finance/kas-bank' },
     ],
   },
   {
