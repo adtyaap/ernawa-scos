@@ -1401,6 +1401,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          payment_term_days: number | null
           phone: string | null
           status: string
         }
@@ -1410,6 +1411,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          payment_term_days?: number | null
           phone?: string | null
           status?: string
         }
@@ -1419,6 +1421,7 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          payment_term_days?: number | null
           phone?: string | null
           status?: string
         }
@@ -1903,6 +1906,16 @@ export type Database = {
           },
         ]
       }
+      v_trading_dpo_inputs: {
+        Row: {
+          buy_price_per_kg: number | null
+          delivery_allocation_id: string | null
+          payment_term_days: number | null
+          purchase_value: number | null
+          qty_kg: number | null
+        }
+        Relationships: []
+      }
       v_trading_margin_by_product: {
         Row: {
           cogs: number | null
@@ -2187,6 +2200,22 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "v_trading_delivery_margin"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_dpo_inputs: {
+        Args: never
+        Returns: {
+          buy_price_per_kg: number | null
+          delivery_allocation_id: string | null
+          payment_term_days: number | null
+          purchase_value: number | null
+          qty_kg: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_dpo_inputs"
           isOneToOne: false
           isSetofReturn: true
         }

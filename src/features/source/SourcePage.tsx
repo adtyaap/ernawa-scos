@@ -34,6 +34,7 @@ export function SourcePage() {
   const [formContactPerson, setFormContactPerson] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formAddress, setFormAddress] = useState('');
+  const [formPaymentTermDays, setFormPaymentTermDays] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formFeedback, setFormFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
@@ -47,7 +48,7 @@ export function SourcePage() {
 
     const { data, error } = await supabase
       .from('suppliers')
-      .select('id, name, contact_person, phone, address, status, created_at')
+      .select('id, name, contact_person, phone, address, status, created_at, payment_term_days')
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -68,6 +69,7 @@ export function SourcePage() {
     setFormContactPerson('');
     setFormPhone('');
     setFormAddress('');
+    setFormPaymentTermDays('');
   }
 
   function startEdit(supplier: Supplier) {
@@ -76,6 +78,7 @@ export function SourcePage() {
     setFormContactPerson(supplier.contact_person ?? '');
     setFormPhone(supplier.phone ?? '');
     setFormAddress(supplier.address ?? '');
+    setFormPaymentTermDays(supplier.payment_term_days !== null ? String(supplier.payment_term_days) : '');
     setFormFeedback(null);
   }
 
@@ -97,6 +100,7 @@ export function SourcePage() {
       contact_person: formContactPerson.trim() || null,
       phone: formPhone.trim() || null,
       address: formAddress.trim() || null,
+      payment_term_days: formPaymentTermDays.trim() === '' ? null : Number(formPaymentTermDays),
     };
 
     const { error } = editingId
@@ -151,6 +155,11 @@ export function SourcePage() {
     { key: 'name', header: 'Nama Supplier' },
     { key: 'contact_person', header: 'Kontak', render: (row) => row.contact_person ?? '-' },
     { key: 'phone', header: 'Telepon', render: (row) => row.phone ?? '-' },
+    {
+      key: 'payment_term_days',
+      header: 'Termin Bayar',
+      render: (row) => (row.payment_term_days !== null ? `${row.payment_term_days} hari` : 'Belum diklasifikasi'),
+    },
     {
       key: 'created_at',
       header: 'Terdaftar',
@@ -250,6 +259,19 @@ export function SourcePage() {
                 onChange={(e) => setFormAddress(e.target.value)}
                 className={inputClass}
                 placeholder="Opsional"
+              />
+            </label>
+
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-app-muted">Termin Bayar (hari)</span>
+              <input
+                type="number"
+                min="0"
+                step="1"
+                value={formPaymentTermDays}
+                onChange={(e) => setFormPaymentTermDays(e.target.value)}
+                className={inputClass}
+                placeholder="0 = tunai di tempat, kosong = belum diklasifikasi"
               />
             </label>
           </div>

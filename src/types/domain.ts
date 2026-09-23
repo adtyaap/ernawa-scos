@@ -25,6 +25,19 @@ export interface Supplier {
   address: string | null;
   status: 'aktif' | 'nonaktif';
   created_at: string;
+  payment_term_days: number | null;
+}
+
+// Hasil view v_trading_dpo_inputs — migration 0045. Granularitas per
+// delivery_allocation, sama persis TradingCapitalLockup. payment_term_days
+// NULL = supplier belum diklasifikasi (dikecualikan dari rata-rata
+// tertimbang DPO di frontend, bukan diasumsikan 0).
+export interface TradingDpoInput {
+  delivery_allocation_id: string;
+  qty_kg: number;
+  buy_price_per_kg: number;
+  purchase_value: number;
+  payment_term_days: number | null;
 }
 
 export interface Product {

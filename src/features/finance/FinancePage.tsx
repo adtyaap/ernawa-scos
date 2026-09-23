@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type FormEvent } from 'react';
-import { Clock, Download, Percent, Wallet } from 'lucide-react';
+import { Clock, Download, Percent, Receipt, RefreshCw, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
@@ -9,6 +9,7 @@ import { downloadCsv } from '../../lib/exportCsv';
 import type {
   TradingCapitalLockup,
   TradingDeliveryMargin,
+  TradingDpoInput,
   TradingMarginByProduct,
   TradingMarginBySegment,
   TradingMarginMixedSummary,
@@ -56,6 +57,7 @@ export function FinancePage() {
   const [marginByProduct, setMarginByProduct] = useState<TradingMarginByProduct[]>([]);
   const [marginMixed, setMarginMixed] = useState<TradingMarginMixedSummary | null>(null);
   const [marginBySegment, setMarginBySegment] = useState<TradingMarginBySegment[]>([]);
+  const [dpoInputs, setDpoInputs] = useState<TradingDpoInput[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -77,7 +79,7 @@ export function FinancePage() {
       // Investor TIDAK boleh membaca view/tabel mentah (RLS sengaja menolak);
       // ia membaca baris view yang sama lewat fungsi SECURITY DEFINER
       // khusus (migration 0022) yang hanya melayani owner/investor.
-      const [marginRes, lockupRes, receivableRes, byProductRes, mixedRes, bySegmentRes] = await Promise.all(
+      const [marginRes, lockupRes, receivableRes, byProductRes, mixedRes, bySegmentRes, dpoRes] = await Promise.all(
         isInvestor
           ? [
               supabase.rpc('investor_trading_delivery_margin'),
@@ -86,6 +88,7 @@ export function FinancePage() {
               supabase.rpc('investor_trading_margin_by_product'),
               supabase.rpc('investor_trading_margin_mixed_summary'),
               supabase.rpc('investor_trading_margin_by_segment'),
+              supabase.rpc('investor_trading_dpo_inputs'),
             ]
           : [
               supabase.from('v_trading_delivery_margin').select('*'),
@@ -94,10 +97,12 @@ export function FinancePage() {
               supabase.from('v_trading_margin_by_product').select('*'),
               supabase.from('v_trading_margin_mixed_summary').select('*'),
               supabase.from('v_trading_margin_by_segment').select('*'),
+              supabase.from('v_trading_dpo_inputs').select('*'),
             ],
       );
 
-      const firstError = marginRes.error ?? lockupRes.error ?? receivableRes.error ?? byProductRes.error ?? mixedRes.error ?? bySegmentRes.error;
+      const firstError =
+        marginRes.error ?? lockupRes.error ?? receivableRes.error ?? byProductRes.error ?? mixedRes.error ?? bySegmentRes.error ?? dpoRes.error;
       if (firstError) {
         setLoadError(firstError.message);
       } else {
@@ -107,6 +112,7 @@ export function FinancePage() {
         setMarginByProduct((byProductRes.data as TradingMarginByProduct[]) ?? []);
         setMarginMixed(((mixedRes.data as TradingMarginMixedSummary[]) ?? [])[0] ?? null);
         setMarginBySegment((bySegmentRes.data as TradingMarginBySegment[]) ?? []);
+        setDpoInputs((dpoRes.data as TradingDpoInput[]) ?? []);
       }
       setLoading(false);
     }
@@ -201,6 +207,28 @@ export function FinancePage() {
     return total / receivableRows.length;
   }, [receivableRows]);
 
+  // DPO: weighted average HANYA dari baris yang payment_term_days-nya
+  // terisi (bukan diasumsikan 0 utk supplier yang belum diklasifikasi) --
+  // dgn dpoCoveragePct sbg indikator seberapa representatif angkanya,
+  // konsisten prinsip proyek "jangan mengisi kosong dgn karangan".
+  const { dpoWeighted, dpoCoveragePct } = useMemo(() => {
+    const totalValueAll = dpoInputs.reduce((sum, r) => sum + r.purchase_value, 0);
+    const withTerm = dpoInputs.filter((r) => r.payment_term_days !== null);
+    const totalValueWithTerm = withTerm.reduce((sum, r) => sum + r.purchase_value, 0);
+    const weighted = totalValueWithTerm > 0 ? withTerm.reduce((sum, r) => sum + (r.payment_term_days ?? 0) * r.purchase_value, 0) / totalValueWithTerm : null;
+    return {
+      dpoWeighted: weighted,
+      dpoCoveragePct: totalValueAll > 0 ? (totalValueWithTerm / totalValueAll) * 100 : null,
+    };
+  }, [dpoInputs]);
+
+  // CCC = Inventory Days + DSO - DPO. Hanya dihitung kalau Inventory Days
+  // ada (menandakan memang ada riwayat trading) -- DSO/DPO yang belum ada
+  // datanya diperlakukan 0 (bisa jadi memang tidak ada piutang/utang
+  // outstanding saat ini, beda dari "belum pernah ada transaksi sama
+  // sekali" yang direpresentasikan avgLockupDays === null).
+  const ccc = avgLockupDays !== null ? avgLockupDays + (avgDaysToCollect ?? 0) - (dpoWeighted ?? 0) : null;
+
   const totalUnderlyingCount = marginRows.length + lockupRows.length + receivableRows.length;
   const isSparseData = totalUnderlyingCount < SPARSE_DATA_THRESHOLD;
 
@@ -258,6 +286,22 @@ export function FinancePage() {
             label="Hari Piutang Riil"
             value={avgDaysToCollect !== null ? formatDays(avgDaysToCollect) : 'Belum ada data'}
             note={receivableRows.length > 0 ? `Berdasarkan ${receivableRows.length} settlement` : undefined}
+          />
+          <KPICard
+            icon={Receipt}
+            label="DPO (Termin ke Supplier)"
+            value={dpoWeighted !== null ? formatDays(dpoWeighted) : 'Belum ada data'}
+            note={
+              dpoCoveragePct !== null
+                ? `Cakupan ${formatNumber(Math.round(dpoCoveragePct))}% nilai pembelian (sisanya: termin belum diisi)`
+                : undefined
+            }
+          />
+          <KPICard
+            icon={RefreshCw}
+            label="Cash Conversion Cycle"
+            value={ccc !== null ? formatDays(ccc) : 'Belum ada data'}
+            note="Inventory Days + Hari Piutang − DPO"
           />
         </div>
 
