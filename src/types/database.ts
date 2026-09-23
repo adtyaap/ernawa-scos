@@ -421,6 +421,7 @@ export type Database = {
       delivery_allocations: {
         Row: {
           batch_line_id: string
+          buy_price_per_kg: number
           created_at: string
           delivery_id: string
           fefo_rank: number
@@ -430,6 +431,7 @@ export type Database = {
         }
         Insert: {
           batch_line_id: string
+          buy_price_per_kg: number
           created_at?: string
           delivery_id: string
           fefo_rank: number
@@ -439,6 +441,7 @@ export type Database = {
         }
         Update: {
           batch_line_id?: string
+          buy_price_per_kg?: number
           created_at?: string
           delivery_id?: string
           fefo_rank?: number
