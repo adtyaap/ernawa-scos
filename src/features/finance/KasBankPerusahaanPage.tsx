@@ -9,25 +9,37 @@ import { formatCurrency } from '../../lib/format';
 const inputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
 
-type Category = 'settlement_in' | 'kas_panjar_topup_out' | 'supplier_payment' | 'opex' | 'other_in' | 'other_out' | 'adjustment';
+type Category = 'settlement_in' | 'kas_panjar_topup_out' | 'supplier_payment' | 'opex' | 'other_in' | 'other_out' | 'adjustment' | 'tax';
 type Track = 'trading' | 'budidaya';
+type TaxType = 'pph_final_umkm' | 'pph_21' | 'pph_23' | 'pph_lainnya';
 
 // Kategori yang boleh diinput manual lewat form ini. settlement_in &
 // kas_panjar_topup_out auto-tercatat lewat trigger DB dari Settlement/Kas
 // Panjar (migration 0040) -- sengaja TIDAK ditawarkan di sini supaya tidak
 // dobel-hitung. adjustment cuma lewat tombol "Koreksi" (reversal), bukan
 // entri baru langsung.
-const MANUAL_CATEGORIES: Category[] = ['supplier_payment', 'opex', 'other_in', 'other_out'];
+const MANUAL_CATEGORIES: Category[] = ['supplier_payment', 'opex', 'tax', 'other_in', 'other_out'];
 
 const CATEGORY_LABEL: Record<Category, string> = {
   settlement_in: 'Pelunasan Piutang (otomatis)',
   kas_panjar_topup_out: 'Top-up Kas Panjar (otomatis)',
   supplier_payment: 'Bayar Supplier',
   opex: 'Biaya Operasional (Opex)',
+  tax: 'Pajak',
   other_in: 'Masuk Lainnya',
   other_out: 'Keluar Lainnya',
   adjustment: 'Koreksi',
 };
+
+// Jenis PPh TETAP (bukan dikelola Owner spt opex_category_id, migration
+// 0043) -- Ernawa belum/bukan PKP, jadi TIDAK ADA jenis PPN di sini, sengaja.
+const TAX_TYPE_LABEL: Record<TaxType, string> = {
+  pph_final_umkm: 'PPh Final UMKM',
+  pph_21: 'PPh 21',
+  pph_23: 'PPh 23',
+  pph_lainnya: 'PPh Lainnya',
+};
+const TAX_TYPES: TaxType[] = ['pph_final_umkm', 'pph_21', 'pph_23', 'pph_lainnya'];
 
 // Arah kas tiap kategori manual -- menentukan tanda (+/-) dari angka yang
 // diketik user (selalu positif di form, lebih natural daripada minta user
@@ -37,6 +49,7 @@ const CATEGORY_DIRECTION: Record<Category, 1 | -1> = {
   kas_panjar_topup_out: -1,
   supplier_payment: -1,
   opex: -1,
+  tax: -1,
   other_in: 1,
   other_out: -1,
   adjustment: 1,
@@ -52,6 +65,7 @@ interface LedgerRow {
   reversal_of: string | null;
   created_by: string;
   opex_category_id: string | null;
+  tax_type: TaxType | null;
   poster: { full_name: string } | null;
 }
 
@@ -84,6 +98,7 @@ export function KasBankPerusahaanPage() {
   const [formTrack, setFormTrack] = useState<Track>('trading');
   const [formCategory, setFormCategory] = useState<Category>('opex');
   const [formOpexCategoryId, setFormOpexCategoryId] = useState('');
+  const [formTaxType, setFormTaxType] = useState<TaxType | ''>('');
   const [formAmount, setFormAmount] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -101,7 +116,7 @@ export function KasBankPerusahaanPage() {
         ? supabase
             .from('company_cash_ledger')
             .select(
-              'id, track, amount, category, description, event_at, reversal_of, created_by, opex_category_id, poster:users!company_cash_ledger_created_by_fkey(full_name)',
+              'id, track, amount, category, description, event_at, reversal_of, created_by, opex_category_id, tax_type, poster:users!company_cash_ledger_created_by_fkey(full_name)',
             )
             .order('event_at', { ascending: false })
         : supabase.rpc('investor_company_cash_ledger'),
@@ -128,6 +143,7 @@ export function KasBankPerusahaanPage() {
     const amountNum = Number(formAmount);
     if (!amountNum || submitting || !session?.user.id) return;
     if (formCategory === 'opex' && !formOpexCategoryId) return;
+    if (formCategory === 'tax' && !formTaxType) return;
 
     const signedAmount = Math.abs(amountNum) * CATEGORY_DIRECTION[formCategory];
 
@@ -138,6 +154,7 @@ export function KasBankPerusahaanPage() {
       track: formTrack,
       category: formCategory,
       opex_category_id: formCategory === 'opex' ? formOpexCategoryId : null,
+      tax_type: formCategory === 'tax' ? formTaxType : null,
       amount: signedAmount,
       description: formDescription.trim() || null,
       created_by: session.user.id,
@@ -155,6 +172,7 @@ export function KasBankPerusahaanPage() {
     setFormAmount('');
     setFormDescription('');
     setFormOpexCategoryId('');
+    setFormTaxType('');
     await loadAll();
   }
 
@@ -197,6 +215,17 @@ export function KasBankPerusahaanPage() {
     .filter(([, total]) => total !== 0)
     .sort((a, b) => b[1] - a[1]);
 
+  // Breakdown pajak per jenis (pola sama opex, net termasuk reversal).
+  const taxByType = new Map<string, number>();
+  for (const r of rows) {
+    if (r.category !== 'tax') continue;
+    const label = (r.tax_type && TAX_TYPE_LABEL[r.tax_type]) || 'Tanpa jenis';
+    taxByType.set(label, (taxByType.get(label) ?? 0) - r.amount);
+  }
+  const taxBreakdownRows = Array.from(taxByType.entries())
+    .filter(([, total]) => total !== 0)
+    .sort((a, b) => b[1] - a[1]);
+
   const historyColumns: DataTableColumn<LedgerRow>[] = [
     { key: 'event_at', header: 'Waktu', render: (row) => formatDateTime(row.event_at) },
     {
@@ -217,8 +246,12 @@ export function KasBankPerusahaanPage() {
     { key: 'amount', header: 'Jumlah', render: (row) => formatCurrency(row.amount) },
     {
       key: 'opex_category',
-      header: 'Kategori Opex',
-      render: (row) => (row.category === 'opex' && row.opex_category_id ? opexCategoryNameById.get(row.opex_category_id) ?? '-' : '-'),
+      header: 'Kategori Opex / Jenis Pajak',
+      render: (row) => {
+        if (row.category === 'opex' && row.opex_category_id) return opexCategoryNameById.get(row.opex_category_id) ?? '-';
+        if (row.category === 'tax' && row.tax_type) return TAX_TYPE_LABEL[row.tax_type];
+        return '-';
+      },
     },
     { key: 'description', header: 'Keterangan', render: (row) => row.description ?? '-' },
     { key: 'poster', header: 'Dicatat oleh', render: (row) => row.poster?.full_name ?? '-' },
@@ -342,6 +375,7 @@ export function KasBankPerusahaanPage() {
                 onChange={(e) => {
                   setFormCategory(e.target.value as Category);
                   setFormOpexCategoryId('');
+                  setFormTaxType('');
                 }}
                 className={inputClass}
               >
@@ -366,6 +400,19 @@ export function KasBankPerusahaanPage() {
                 {opexCategories.length === 0 && (
                   <span className="text-xs text-app-danger">Belum ada kategori opex — tambah dulu di Kelola Kategori Opex.</span>
                 )}
+              </label>
+            )}
+            {formCategory === 'tax' && (
+              <label className="block space-y-1">
+                <span className="text-xs font-medium text-app-muted">Jenis Pajak *</span>
+                <select value={formTaxType} onChange={(e) => setFormTaxType(e.target.value as TaxType)} className={inputClass}>
+                  <option value="">Pilih jenis</option>
+                  {TAX_TYPES.map((t) => (
+                    <option key={t} value={t}>
+                      {TAX_TYPE_LABEL[t]}
+                    </option>
+                  ))}
+                </select>
               </label>
             )}
             <label className="block space-y-1">
@@ -393,7 +440,12 @@ export function KasBankPerusahaanPage() {
           </div>
           <button
             type="submit"
-            disabled={submitting || !formAmount || (formCategory === 'opex' && !formOpexCategoryId)}
+            disabled={
+              submitting ||
+              !formAmount ||
+              (formCategory === 'opex' && !formOpexCategoryId) ||
+              (formCategory === 'tax' && !formTaxType)
+            }
             className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
           >
             {submitting ? 'Menyimpan...' : 'Simpan'}
@@ -406,6 +458,20 @@ export function KasBankPerusahaanPage() {
           <h2 className="text-sm font-semibold text-app-text">Opex per Kategori</h2>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {opexBreakdownRows.map(([label, total]) => (
+              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel px-4 py-2">
+                <span className="text-sm text-app-text">{label}</span>
+                <span className="text-sm font-semibold text-app-text">{formatCurrency(total)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {taxBreakdownRows.length > 0 && (
+        <div className="space-y-2">
+          <h2 className="text-sm font-semibold text-app-text">Pajak per Jenis</h2>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {taxBreakdownRows.map(([label, total]) => (
               <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel px-4 py-2">
                 <span className="text-sm text-app-text">{label}</span>
                 <span className="text-sm font-semibold text-app-text">{formatCurrency(total)}</span>

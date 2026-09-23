@@ -320,6 +320,7 @@ export type Database = {
           ref_id: string | null
           ref_type: string | null
           reversal_of: string | null
+          tax_type: string | null
           track: string
         }
         Insert: {
@@ -334,6 +335,7 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
+          tax_type?: string | null
           track: string
         }
         Update: {
@@ -348,6 +350,7 @@ export type Database = {
           ref_id?: string | null
           ref_type?: string | null
           reversal_of?: string | null
+          tax_type?: string | null
           track?: string
         }
         Relationships: [
@@ -2023,6 +2026,7 @@ export type Database = {
           ref_id: string | null
           ref_type: string | null
           reversal_of: string | null
+          tax_type: string | null
           track: string
         }[]
         SetofOptions: {
