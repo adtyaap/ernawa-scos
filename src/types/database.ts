@@ -595,6 +595,41 @@ export type Database = {
           },
         ]
       }
+      finance_budgets: {
+        Row: {
+          budget_amount: number
+          line_item: string
+          period_month: string
+          track: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          budget_amount: number
+          line_item: string
+          period_month: string
+          track: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          budget_amount?: number
+          line_item?: string
+          period_month?: string
+          track?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "finance_budgets_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       finance_targets: {
         Row: {
           margin_target_pct: number
@@ -1899,6 +1934,13 @@ export type Database = {
           product_name: string
           received_at: string
           tank_name: string
+        }[]
+      }
+      get_budget_actuals: {
+        Args: { p_period_month: string; p_track: string }
+        Returns: {
+          opex_actual: number
+          revenue_actual: number
         }[]
       }
       get_fefo_risk_report: {
