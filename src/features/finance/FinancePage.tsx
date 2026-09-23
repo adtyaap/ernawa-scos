@@ -6,7 +6,21 @@ import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBan
 import { KPICard } from '../../components/shared/KPICard';
 import { formatCurrency, formatNumber, todayLocalDate } from '../../lib/format';
 import { downloadCsv } from '../../lib/exportCsv';
-import type { TradingCapitalLockup, TradingDeliveryMargin, TradingReceivableCycle } from '../../types/domain';
+import type {
+  TradingCapitalLockup,
+  TradingDeliveryMargin,
+  TradingMarginByProduct,
+  TradingMarginBySegment,
+  TradingMarginMixedSummary,
+  TradingReceivableCycle,
+} from '../../types/domain';
+
+const SEGMENT_DISPLAY_LABEL: Record<string, string> = {
+  restoran: 'Restoran',
+  eksportir: 'Eksportir',
+  lainnya: 'Lainnya',
+  belum_diklasifikasi: 'Belum Diklasifikasi',
+};
 
 const SPARSE_DATA_THRESHOLD = 5;
 
@@ -39,6 +53,9 @@ export function FinancePage() {
   const [marginRows, setMarginRows] = useState<TradingDeliveryMargin[]>([]);
   const [lockupRows, setLockupRows] = useState<TradingCapitalLockup[]>([]);
   const [receivableRows, setReceivableRows] = useState<TradingReceivableCycle[]>([]);
+  const [marginByProduct, setMarginByProduct] = useState<TradingMarginByProduct[]>([]);
+  const [marginMixed, setMarginMixed] = useState<TradingMarginMixedSummary | null>(null);
+  const [marginBySegment, setMarginBySegment] = useState<TradingMarginBySegment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -60,27 +77,36 @@ export function FinancePage() {
       // Investor TIDAK boleh membaca view/tabel mentah (RLS sengaja menolak);
       // ia membaca baris view yang sama lewat fungsi SECURITY DEFINER
       // khusus (migration 0022) yang hanya melayani owner/investor.
-      const [marginRes, lockupRes, receivableRes] = await Promise.all(
+      const [marginRes, lockupRes, receivableRes, byProductRes, mixedRes, bySegmentRes] = await Promise.all(
         isInvestor
           ? [
               supabase.rpc('investor_trading_delivery_margin'),
               supabase.rpc('investor_trading_capital_lockup'),
               supabase.rpc('investor_trading_receivable_cycle'),
+              supabase.rpc('investor_trading_margin_by_product'),
+              supabase.rpc('investor_trading_margin_mixed_summary'),
+              supabase.rpc('investor_trading_margin_by_segment'),
             ]
           : [
               supabase.from('v_trading_delivery_margin').select('*'),
               supabase.from('v_trading_capital_lockup').select('*'),
               supabase.from('v_trading_receivable_cycle').select('*'),
+              supabase.from('v_trading_margin_by_product').select('*'),
+              supabase.from('v_trading_margin_mixed_summary').select('*'),
+              supabase.from('v_trading_margin_by_segment').select('*'),
             ],
       );
 
-      const firstError = marginRes.error ?? lockupRes.error ?? receivableRes.error;
+      const firstError = marginRes.error ?? lockupRes.error ?? receivableRes.error ?? byProductRes.error ?? mixedRes.error ?? bySegmentRes.error;
       if (firstError) {
         setLoadError(firstError.message);
       } else {
         setMarginRows((marginRes.data as TradingDeliveryMargin[]) ?? []);
         setLockupRows((lockupRes.data as TradingCapitalLockup[]) ?? []);
         setReceivableRows((receivableRes.data as TradingReceivableCycle[]) ?? []);
+        setMarginByProduct((byProductRes.data as TradingMarginByProduct[]) ?? []);
+        setMarginMixed(((mixedRes.data as TradingMarginMixedSummary[]) ?? [])[0] ?? null);
+        setMarginBySegment((bySegmentRes.data as TradingMarginBySegment[]) ?? []);
       }
       setLoading(false);
     }
@@ -286,6 +312,52 @@ export function FinancePage() {
             )}
           </div>
         )}
+
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Produk</h3>
+            {marginByProduct.length === 0 && !marginMixed ? (
+              <p className="text-xs text-app-muted">Belum ada data.</p>
+            ) : (
+              <div className="space-y-1">
+                {marginByProduct.map((row) => (
+                  <div key={row.product_id} className="flex items-center justify-between text-xs">
+                    <span className="text-app-text">{row.product_name}</span>
+                    <span className="text-app-muted">
+                      {formatCurrency(row.margin)} ({row.margin_pct !== null ? `${formatNumber(Math.round(row.margin_pct * 10) / 10)}%` : '-'})
+                    </span>
+                  </div>
+                ))}
+                {marginMixed && marginMixed.delivery_count > 0 && (
+                  <div className="flex items-center justify-between border-t border-app-border pt-1 text-xs">
+                    <span className="text-app-muted">
+                      Campuran ({marginMixed.delivery_count} delivery &gt;1 produk, tidak terpecah)
+                    </span>
+                    <span className="text-app-muted">{formatCurrency(marginMixed.margin)}</span>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Segmen Pelanggan</h3>
+            {marginBySegment.length === 0 ? (
+              <p className="text-xs text-app-muted">Belum ada data.</p>
+            ) : (
+              <div className="space-y-1">
+                {marginBySegment.map((row) => (
+                  <div key={row.segment} className="flex items-center justify-between text-xs">
+                    <span className="text-app-text">{SEGMENT_DISPLAY_LABEL[row.segment] ?? row.segment}</span>
+                    <span className="text-app-muted">
+                      {formatCurrency(row.margin)} ({row.margin_pct !== null ? `${formatNumber(Math.round(row.margin_pct * 10) / 10)}%` : '-'})
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
 
         <div className="flex flex-wrap gap-2">
           <button

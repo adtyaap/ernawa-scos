@@ -34,6 +34,8 @@ export interface Product {
 
 export type SettlementMode = 'cod' | 'term';
 
+export type CustomerSegment = 'restoran' | 'eksportir' | 'lainnya';
+
 export interface Customer {
   id: string;
   name: string;
@@ -41,6 +43,7 @@ export interface Customer {
   payment_term_days: number | null;
   status: 'aktif' | 'nonaktif';
   notes: string | null;
+  segment: CustomerSegment | null;
 }
 
 export type UserRole = 'owner' | 'lead_lapangan' | 'staf_lapangan' | 'investor';
@@ -166,4 +169,36 @@ export interface TradingReceivableCycle {
   settled_at: string;
   due_date: string | null;
   days_to_collect: number;
+}
+
+// Hasil view v_trading_margin_by_product — migration 0044. Hanya delivery
+// SATU-produk (delivery campuran dikecualikan, lihat v_trading_margin_mixed_summary).
+export interface TradingMarginByProduct {
+  product_id: string;
+  product_name: string;
+  delivery_count: number;
+  revenue: number;
+  cogs: number;
+  margin: number;
+  margin_pct: number | null;
+}
+
+// Hasil view v_trading_margin_mixed_summary — migration 0044. Satu baris
+// ringkasan (bukan array) untuk semua delivery campuran >1 produk.
+export interface TradingMarginMixedSummary {
+  delivery_count: number;
+  revenue: number;
+  cogs: number;
+  margin: number;
+}
+
+// Hasil view v_trading_margin_by_segment — migration 0044. segment =
+// 'belum_diklasifikasi' kalau customers.segment NULL.
+export interface TradingMarginBySegment {
+  segment: string;
+  delivery_count: number;
+  revenue: number;
+  cogs: number;
+  margin: number;
+  margin_pct: number | null;
 }

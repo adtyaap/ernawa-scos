@@ -385,6 +385,7 @@ export type Database = {
           name: string
           notes: string | null
           payment_term_days: number | null
+          segment: string | null
           settlement_mode: Database["public"]["Enums"]["settlement_mode"]
           status: string
         }
@@ -395,6 +396,7 @@ export type Database = {
           name: string
           notes?: string | null
           payment_term_days?: number | null
+          segment?: string | null
           settlement_mode: Database["public"]["Enums"]["settlement_mode"]
           status?: string
         }
@@ -405,6 +407,7 @@ export type Database = {
           name?: string
           notes?: string | null
           payment_term_days?: number | null
+          segment?: string | null
           settlement_mode?: Database["public"]["Enums"]["settlement_mode"]
           status?: string
         }
@@ -605,6 +608,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "demands_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_margin_by_product"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -999,6 +1009,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "price_today_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_margin_by_product"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "price_today_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
@@ -1036,6 +1053,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_holding_policy_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_margin_by_product"
+            referencedColumns: ["product_id"]
           },
         ]
       }
@@ -1137,6 +1161,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "products"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_lots_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_margin_by_product"
+            referencedColumns: ["product_id"]
           },
           {
             foreignKeyName: "receiving_lots_receiving_transaction_id_fkey"
@@ -1462,6 +1493,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "terima_cepat_favorites_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_margin_by_product"
+            referencedColumns: ["product_id"]
+          },
+          {
             foreignKeyName: "terima_cepat_favorites_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
@@ -1678,6 +1716,36 @@ export type Database = {
           },
         ]
       }
+      v_delivery_product_line_count: {
+        Row: {
+          delivery_id: string | null
+          n_products: number | null
+          sole_product_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_allocations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "delivery_allocations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_deliveries_pending_settlement"
+            referencedColumns: ["delivery_id"]
+          },
+          {
+            foreignKeyName: "delivery_allocations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_delivery_margin"
+            referencedColumns: ["delivery_id"]
+          },
+        ]
+      }
       v_demands_with_fulfillment: {
         Row: {
           allocated_kg: number | null
@@ -1834,6 +1902,38 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      v_trading_margin_by_product: {
+        Row: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          margin_pct: number | null
+          product_id: string | null
+          product_name: string | null
+          revenue: number | null
+        }
+        Relationships: []
+      }
+      v_trading_margin_by_segment: {
+        Row: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          margin_pct: number | null
+          revenue: number | null
+          segment: string | null
+        }
+        Relationships: []
+      }
+      v_trading_margin_mixed_summary: {
+        Row: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          revenue: number | null
+        }
+        Relationships: []
       }
       v_trading_receivable_cycle: {
         Row: {
@@ -2087,6 +2187,56 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "v_trading_delivery_margin"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_margin_by_product: {
+        Args: never
+        Returns: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          margin_pct: number | null
+          product_id: string | null
+          product_name: string | null
+          revenue: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_margin_by_product"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_margin_by_segment: {
+        Args: never
+        Returns: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          margin_pct: number | null
+          revenue: number | null
+          segment: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_margin_by_segment"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_margin_mixed_summary: {
+        Args: never
+        Returns: {
+          cogs: number | null
+          delivery_count: number | null
+          margin: number | null
+          revenue: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_margin_mixed_summary"
           isOneToOne: false
           isSetofReturn: true
         }

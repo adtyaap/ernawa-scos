@@ -5,10 +5,12 @@ import { useAuth } from '../../lib/authContext';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
-import type { Customer, SettlementMode } from '../../types/domain';
+import type { Customer, CustomerSegment, SettlementMode } from '../../types/domain';
 
 const inputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
+
+const SEGMENT_LABEL: Record<CustomerSegment, string> = { restoran: 'Restoran', eksportir: 'Eksportir', lainnya: 'Lainnya' };
 
 // Kolom customers yang relevan untuk MVP ini: name, settlement_mode,
 // payment_term_days, notes (migrations/0001 + 0006 + 0025). `acceptance_policy`
@@ -32,6 +34,7 @@ export function CustomerPage() {
   const [formName, setFormName] = useState('');
   const [formSettlementMode, setFormSettlementMode] = useState<SettlementMode>('cod');
   const [formPaymentTermDays, setFormPaymentTermDays] = useState('');
+  const [formSegment, setFormSegment] = useState<CustomerSegment | ''>('');
   const [formNotes, setFormNotes] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -43,7 +46,7 @@ export function CustomerPage() {
 
     const { data, error } = await supabase
       .from('customers')
-      .select('id, name, settlement_mode, payment_term_days, status, notes')
+      .select('id, name, settlement_mode, payment_term_days, status, notes, segment')
       .order('name');
 
     if (error) {
@@ -63,6 +66,7 @@ export function CustomerPage() {
     setFormName('');
     setFormSettlementMode('cod');
     setFormPaymentTermDays('');
+    setFormSegment('');
     setFormNotes('');
   }
 
@@ -71,6 +75,7 @@ export function CustomerPage() {
     setFormName(customer.name);
     setFormSettlementMode(customer.settlement_mode);
     setFormPaymentTermDays(customer.payment_term_days ? String(customer.payment_term_days) : '');
+    setFormSegment(customer.segment ?? '');
     setFormNotes(customer.notes ?? '');
     setFormFeedback(null);
   }
@@ -121,6 +126,7 @@ export function CustomerPage() {
       name: trimmedName,
       settlement_mode: formSettlementMode,
       payment_term_days: paymentTermDays,
+      segment: formSegment || null,
       notes: formNotes.trim() || null,
     };
 
@@ -190,6 +196,11 @@ export function CustomerPage() {
       key: 'payment_term_days',
       header: 'Termin',
       render: (row) => (row.settlement_mode === 'term' && row.payment_term_days ? `${row.payment_term_days} hari` : '-'),
+    },
+    {
+      key: 'segment',
+      header: 'Segmen',
+      render: (row) => (row.segment ? SEGMENT_LABEL[row.segment] : '-'),
     },
     {
       key: 'notes',
@@ -282,6 +293,18 @@ export function CustomerPage() {
                 />
               </label>
             )}
+
+            <label className="block space-y-1">
+              <span className="text-xs font-medium text-app-muted">Segmen (opsional)</span>
+              <select value={formSegment} onChange={(e) => setFormSegment(e.target.value as CustomerSegment | '')} className={inputClass}>
+                <option value="">Belum diklasifikasi</option>
+                {(Object.keys(SEGMENT_LABEL) as CustomerSegment[]).map((s) => (
+                  <option key={s} value={s}>
+                    {SEGMENT_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
           </div>
 
           <label className="block space-y-1">
