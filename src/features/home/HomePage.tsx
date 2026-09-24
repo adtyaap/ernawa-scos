@@ -375,7 +375,6 @@ function HomeDashboard() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="tabular-nums text-xs uppercase tracking-widest text-app-accent">Langkah Pasti · Track Trading</p>
         <h1 className="font-display text-2xl font-semibold text-app-text">Home</h1>
         <p className="text-sm text-app-muted">Ringkasan operasional &amp; finansial. Stok dan metrik selalu dipisah per track, tidak digabung.</p>
       </div>
