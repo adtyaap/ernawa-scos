@@ -215,3 +215,24 @@ export interface TradingMarginBySegment {
   margin: number;
   margin_pct: number | null;
 }
+
+// Hasil view v_receiving_trust / v_settlement_trust — migration 0046. Satu
+// baris per track (trading/budidaya).
+export interface TrustSummary {
+  track: string;
+  total_value: number;
+  verified_value: number;
+}
+
+// Hasil fungsi get_mortality_rates() — migration 0046. threshold_pct NULL
+// = belum diatur Owner utk site itu (is_overdue selalu false).
+export interface MortalityRateRow {
+  site_id: string;
+  site_name: string;
+  track: string;
+  received_kg: number;
+  mortality_kg: number;
+  mortality_pct: number | null;
+  threshold_pct: number | null;
+  is_overdue: boolean;
+}

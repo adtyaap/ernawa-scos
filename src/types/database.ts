@@ -957,6 +957,42 @@ export type Database = {
           },
         ]
       }
+      mortality_thresholds: {
+        Row: {
+          site_id: string
+          threshold_pct: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          site_id: string
+          threshold_pct: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          site_id?: string
+          threshold_pct?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mortality_thresholds_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mortality_thresholds_updated_by_fkey"
+            columns: ["updated_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       opex_categories: {
         Row: {
           created_at: string
@@ -1137,6 +1173,7 @@ export type Database = {
           product_id: string
           qty_kg: number
           receiving_transaction_id: string
+          verified: boolean
         }
         Insert: {
           buy_price_per_kg: number
@@ -1145,6 +1182,7 @@ export type Database = {
           product_id: string
           qty_kg: number
           receiving_transaction_id: string
+          verified?: boolean
         }
         Update: {
           buy_price_per_kg?: number
@@ -1153,6 +1191,7 @@ export type Database = {
           product_id?: string
           qty_kg?: number
           receiving_transaction_id?: string
+          verified?: boolean
         }
         Relationships: [
           {
@@ -1248,6 +1287,7 @@ export type Database = {
           mode: Database["public"]["Enums"]["settlement_mode"]
           override_reason: string | null
           settled_at: string | null
+          verified: boolean
         }
         Insert: {
           amount: number
@@ -1259,6 +1299,7 @@ export type Database = {
           mode: Database["public"]["Enums"]["settlement_mode"]
           override_reason?: string | null
           settled_at?: string | null
+          verified?: boolean
         }
         Update: {
           amount?: number
@@ -1270,6 +1311,7 @@ export type Database = {
           mode?: Database["public"]["Enums"]["settlement_mode"]
           override_reason?: string | null
           settled_at?: string | null
+          verified?: boolean
         }
         Relationships: [
           {
@@ -1824,6 +1866,22 @@ export type Database = {
           },
         ]
       }
+      v_receiving_trust: {
+        Row: {
+          total_value: number | null
+          track: string | null
+          verified_value: number | null
+        }
+        Relationships: []
+      }
+      v_settlement_trust: {
+        Row: {
+          total_value: number | null
+          track: string | null
+          verified_value: number | null
+        }
+        Relationships: []
+      }
       v_settlements_aging: {
         Row: {
           amount: number | null
@@ -2104,6 +2162,19 @@ export type Database = {
           track: string
         }[]
       }
+      get_mortality_rates: {
+        Args: { p_days?: number }
+        Returns: {
+          is_overdue: boolean
+          mortality_kg: number
+          mortality_pct: number
+          received_kg: number
+          site_id: string
+          site_name: string
+          threshold_pct: number
+          track: string
+        }[]
+      }
       get_or_create_batch: {
         Args: { p_business_date: string; p_site_id: string; p_tank_id: string }
         Returns: string
@@ -2145,6 +2216,34 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "company_cash_ledger"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_receiving_trust: {
+        Args: never
+        Returns: {
+          total_value: number | null
+          track: string | null
+          verified_value: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_receiving_trust"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_settlement_trust: {
+        Args: never
+        Returns: {
+          total_value: number | null
+          track: string | null
+          verified_value: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_settlement_trust"
           isOneToOne: false
           isSetofReturn: true
         }

@@ -73,6 +73,7 @@ export function TerimaCepatPage() {
   const [pendingTankId, setPendingTankId] = useState<string | null>(null);
   const [transactionDate, setTransactionDate] = useState(todayLocalDate);
   const [lots, setLots] = useState<LotDraft[]>([newLotDraft()]);
+  const [verified, setVerified] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
@@ -201,6 +202,7 @@ export function TerimaCepatPage() {
         product_id: lot.product_id,
         qty_kg: Number(lot.qty_kg),
         buy_price_per_kg: Number(lot.buy_price_per_kg),
+        verified,
       })),
     });
 
@@ -212,6 +214,7 @@ export function TerimaCepatPage() {
 
     setFeedback({ variant: 'success', message: 'Penerimaan berhasil dicatat.' });
     setLots([newLotDraft()]);
+    setVerified(false);
     setSubmitting(false);
   }
 
@@ -365,6 +368,11 @@ export function TerimaCepatPage() {
             </div>
           ))}
         </div>
+
+        <label className="flex items-center gap-2 text-sm text-app-text">
+          <input type="checkbox" checked={verified} onChange={(e) => setVerified(e.target.checked)} />
+          Sudah diverifikasi (cocok bukti transfer/timbang)
+        </label>
 
         <div className="flex flex-wrap items-center gap-3">
           <button

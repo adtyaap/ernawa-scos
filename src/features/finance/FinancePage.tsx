@@ -14,6 +14,7 @@ import type {
   TradingMarginBySegment,
   TradingMarginMixedSummary,
   TradingReceivableCycle,
+  TrustSummary,
 } from '../../types/domain';
 
 const SEGMENT_DISPLAY_LABEL: Record<string, string> = {
@@ -58,6 +59,8 @@ export function FinancePage() {
   const [marginMixed, setMarginMixed] = useState<TradingMarginMixedSummary | null>(null);
   const [marginBySegment, setMarginBySegment] = useState<TradingMarginBySegment[]>([]);
   const [dpoInputs, setDpoInputs] = useState<TradingDpoInput[]>([]);
+  const [receivingTrust, setReceivingTrust] = useState<TrustSummary | null>(null);
+  const [settlementTrust, setSettlementTrust] = useState<TrustSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
@@ -79,30 +82,43 @@ export function FinancePage() {
       // Investor TIDAK boleh membaca view/tabel mentah (RLS sengaja menolak);
       // ia membaca baris view yang sama lewat fungsi SECURITY DEFINER
       // khusus (migration 0022) yang hanya melayani owner/investor.
-      const [marginRes, lockupRes, receivableRes, byProductRes, mixedRes, bySegmentRes, dpoRes] = await Promise.all(
-        isInvestor
-          ? [
-              supabase.rpc('investor_trading_delivery_margin'),
-              supabase.rpc('investor_trading_capital_lockup'),
-              supabase.rpc('investor_trading_receivable_cycle'),
-              supabase.rpc('investor_trading_margin_by_product'),
-              supabase.rpc('investor_trading_margin_mixed_summary'),
-              supabase.rpc('investor_trading_margin_by_segment'),
-              supabase.rpc('investor_trading_dpo_inputs'),
-            ]
-          : [
-              supabase.from('v_trading_delivery_margin').select('*'),
-              supabase.from('v_trading_capital_lockup').select('*'),
-              supabase.from('v_trading_receivable_cycle').select('*'),
-              supabase.from('v_trading_margin_by_product').select('*'),
-              supabase.from('v_trading_margin_mixed_summary').select('*'),
-              supabase.from('v_trading_margin_by_segment').select('*'),
-              supabase.from('v_trading_dpo_inputs').select('*'),
-            ],
-      );
+      const [marginRes, lockupRes, receivableRes, byProductRes, mixedRes, bySegmentRes, dpoRes, receivingTrustRes, settlementTrustRes] =
+        await Promise.all(
+          isInvestor
+            ? [
+                supabase.rpc('investor_trading_delivery_margin'),
+                supabase.rpc('investor_trading_capital_lockup'),
+                supabase.rpc('investor_trading_receivable_cycle'),
+                supabase.rpc('investor_trading_margin_by_product'),
+                supabase.rpc('investor_trading_margin_mixed_summary'),
+                supabase.rpc('investor_trading_margin_by_segment'),
+                supabase.rpc('investor_trading_dpo_inputs'),
+                supabase.rpc('investor_receiving_trust'),
+                supabase.rpc('investor_settlement_trust'),
+              ]
+            : [
+                supabase.from('v_trading_delivery_margin').select('*'),
+                supabase.from('v_trading_capital_lockup').select('*'),
+                supabase.from('v_trading_receivable_cycle').select('*'),
+                supabase.from('v_trading_margin_by_product').select('*'),
+                supabase.from('v_trading_margin_mixed_summary').select('*'),
+                supabase.from('v_trading_margin_by_segment').select('*'),
+                supabase.from('v_trading_dpo_inputs').select('*'),
+                supabase.from('v_receiving_trust').select('*'),
+                supabase.from('v_settlement_trust').select('*'),
+              ],
+        );
 
       const firstError =
-        marginRes.error ?? lockupRes.error ?? receivableRes.error ?? byProductRes.error ?? mixedRes.error ?? bySegmentRes.error ?? dpoRes.error;
+        marginRes.error ??
+        lockupRes.error ??
+        receivableRes.error ??
+        byProductRes.error ??
+        mixedRes.error ??
+        bySegmentRes.error ??
+        dpoRes.error ??
+        receivingTrustRes.error ??
+        settlementTrustRes.error;
       if (firstError) {
         setLoadError(firstError.message);
       } else {
@@ -113,6 +129,8 @@ export function FinancePage() {
         setMarginMixed(((mixedRes.data as TradingMarginMixedSummary[]) ?? [])[0] ?? null);
         setMarginBySegment((bySegmentRes.data as TradingMarginBySegment[]) ?? []);
         setDpoInputs((dpoRes.data as TradingDpoInput[]) ?? []);
+        setReceivingTrust(((receivingTrustRes.data as TrustSummary[]) ?? []).find((r) => r.track === 'trading') ?? null);
+        setSettlementTrust(((settlementTrustRes.data as TrustSummary[]) ?? []).find((r) => r.track === 'trading') ?? null);
       }
       setLoading(false);
     }
@@ -400,6 +418,31 @@ export function FinancePage() {
                 ))}
               </div>
             )}
+          </div>
+        </div>
+
+        <div className="space-y-1 rounded-lg border border-app-border bg-app-panel p-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Data Trust</h3>
+          <p className="text-xs text-app-muted">
+            % nilai transaksi yang sudah ditandai terverifikasi (dicocokkan bukti transfer/timbang/invoice) saat dicatat.
+          </p>
+          <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
+            <div className="text-xs">
+              <span className="text-app-muted">Penerimaan: </span>
+              <span className="font-semibold text-app-text">
+                {receivingTrust && receivingTrust.total_value > 0
+                  ? `${formatNumber(Math.round((receivingTrust.verified_value / receivingTrust.total_value) * 1000) / 10)}%`
+                  : 'Belum ada data'}
+              </span>
+            </div>
+            <div className="text-xs">
+              <span className="text-app-muted">Settlement: </span>
+              <span className="font-semibold text-app-text">
+                {settlementTrust && settlementTrust.total_value > 0
+                  ? `${formatNumber(Math.round((settlementTrust.verified_value / settlementTrust.total_value) * 1000) / 10)}%`
+                  : 'Belum ada data'}
+              </span>
+            </div>
           </div>
         </div>
 

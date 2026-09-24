@@ -40,6 +40,7 @@ export function SettlementPage() {
   const [formMode, setFormMode] = useState<SettlementMode>('cod');
   const [formOverrideReason, setFormOverrideReason] = useState('');
   const [formAmount, setFormAmount] = useState('');
+  const [formVerified, setFormVerified] = useState(false);
   const [amountNote, setAmountNote] = useState<string | null>(null);
   const [loadingSuggestion, setLoadingSuggestion] = useState(false);
 
@@ -140,6 +141,7 @@ export function SettlementPage() {
     setFormMode('cod');
     setFormOverrideReason('');
     setFormAmount('');
+    setFormVerified(false);
     setAmountNote(null);
   }
 
@@ -202,6 +204,7 @@ export function SettlementPage() {
       settled_at: isTerm ? null : new Date().toISOString(),
       due_date: dueDate,
       override_reason: isOverrideNeeded ? formOverrideReason.trim() : null,
+      verified: formVerified,
     });
 
     if (error) {
@@ -348,6 +351,11 @@ export function SettlementPage() {
                       </label>
                     </div>
                   )}
+
+                  <label className="flex items-center gap-2 text-sm text-app-text">
+                    <input type="checkbox" checked={formVerified} onChange={(e) => setFormVerified(e.target.checked)} />
+                    Sudah diverifikasi (cocok invoice/bukti bayar)
+                  </label>
 
                   <div className="flex gap-2">
                     <button

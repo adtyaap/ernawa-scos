@@ -8,7 +8,15 @@ import { DataTable, type DataTableColumn } from '../../components/shared/DataTab
 import { AlertBanner } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { formatCurrency, formatKg, formatNumber } from '../../lib/format';
-import type { AvailableBatchLine, FefoRiskRow, SettlementAgingRow, Site, Track, TradingDeliveryMargin } from '../../types/domain';
+import type {
+  AvailableBatchLine,
+  FefoRiskRow,
+  MortalityRateRow,
+  SettlementAgingRow,
+  Site,
+  Track,
+  TradingDeliveryMargin,
+} from '../../types/domain';
 
 interface ActiveAlert {
   id: string;
@@ -62,6 +70,7 @@ function HomeDashboard() {
   const [fefoRisk, setFefoRisk] = useState<FefoRiskRow[]>([]);
   const [overdueSettlements, setOverdueSettlements] = useState<SettlementAgingRow[]>([]);
   const [marginAlerts, setMarginAlerts] = useState<ActiveAlert[]>([]);
+  const [mortalityRates, setMortalityRates] = useState<MortalityRateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -79,19 +88,21 @@ function HomeDashboard() {
       }
       const sites = (siteData as Site[]) ?? [];
 
-      const [stockResults, demandResult, deliveryResult, fefoResult, agingResult, marginResult, targetResult] = await Promise.all([
-        Promise.all(sites.map((site) => supabase.rpc('get_available_batch_lines', { p_site_id: site.id }))),
-        supabase.from('demands').select('id', { count: 'exact', head: true }).in('status', ['open', 'partial']),
-        supabase
-          .from('deliveries')
-          .select('id', { count: 'exact', head: true })
-          .is('actual_weight_kg', null)
-          .is('cancelled_at', null),
-        supabase.rpc('get_fefo_risk_report'),
-        supabase.from('v_settlements_aging').select('*').is('settled_at', null).lt('days_until_due', 0),
-        supabase.from('v_trading_delivery_margin').select('*'),
-        supabase.from('finance_targets').select('track, margin_target_pct'),
-      ]);
+      const [stockResults, demandResult, deliveryResult, fefoResult, agingResult, marginResult, targetResult, mortalityResult] =
+        await Promise.all([
+          Promise.all(sites.map((site) => supabase.rpc('get_available_batch_lines', { p_site_id: site.id }))),
+          supabase.from('demands').select('id', { count: 'exact', head: true }).in('status', ['open', 'partial']),
+          supabase
+            .from('deliveries')
+            .select('id', { count: 'exact', head: true })
+            .is('actual_weight_kg', null)
+            .is('cancelled_at', null),
+          supabase.rpc('get_fefo_risk_report'),
+          supabase.from('v_settlements_aging').select('*').is('settled_at', null).lt('days_until_due', 0),
+          supabase.from('v_trading_delivery_margin').select('*'),
+          supabase.from('finance_targets').select('track, margin_target_pct'),
+          supabase.rpc('get_mortality_rates', { p_days: 30 }),
+        ]);
 
       if (!active) return;
 
@@ -115,6 +126,7 @@ function HomeDashboard() {
       setAwaitingWeigh(deliveryResult.count ?? 0);
       setFefoRisk((fefoResult.data as FefoRiskRow[]) ?? []);
       setOverdueSettlements((agingResult.data as SettlementAgingRow[]) ?? []);
+      setMortalityRates(((mortalityResult.data as MortalityRateRow[]) ?? []).filter((r) => r.is_overdue));
 
       // Margin di bawah target, per track -- cuma trading yang punya view
       // sumber (v_trading_delivery_margin), budidaya belum beroperasi jadi
@@ -185,7 +197,16 @@ function HomeDashboard() {
       body: `${row.customer_name} — ${formatCurrency(row.amount)}.`,
     };
   });
-  const activeAlerts = [...fefoAlerts, ...arAlerts, ...marginAlerts].sort((a, b) =>
+  const mortalityAlerts: ActiveAlert[] = mortalityRates.map((row) => {
+    const ratio = row.threshold_pct && row.mortality_pct ? row.mortality_pct / row.threshold_pct : 0;
+    return {
+      id: `mortality-${row.site_id}`,
+      severity: ratio > 1.5 ? 'kritis' : 'peringatan',
+      title: `Mortalitas ${row.site_name} di atas ambang`,
+      body: `${formatNumber(Math.round((row.mortality_pct ?? 0) * 10) / 10)}% dari ${formatKg(row.received_kg)} diterima (30 hari terakhir), ambang ${formatNumber(row.threshold_pct ?? 0)}%.`,
+    };
+  });
+  const activeAlerts = [...fefoAlerts, ...arAlerts, ...marginAlerts, ...mortalityAlerts].sort((a, b) =>
     a.severity === b.severity ? 0 : a.severity === 'kritis' ? -1 : 1,
   );
 

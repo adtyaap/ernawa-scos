@@ -4,8 +4,8 @@ import { useAuth } from '../../lib/authContext';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import { StatusBadge } from '../../components/shared/StatusBadge';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
-import { formatKg } from '../../lib/format';
-import type { AvailableBatchLine, Site } from '../../types/domain';
+import { formatKg, formatNumber } from '../../lib/format';
+import type { AvailableBatchLine, MortalityRateRow, Site } from '../../types/domain';
 
 const inputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
@@ -68,9 +68,15 @@ function formatDateTime(value: string): string {
 // ledger negatif otomatis (append-only, tidak ada UPDATE stok). Guard saldo ada
 // di DB (0014/0021), pengecekan di sini cuma supaya pesan lebih cepat.
 export function StokMortalitasPage() {
-  const { session } = useAuth();
+  const { session, profile } = useAuth();
+  const isOwner = profile?.role === 'owner';
 
   const [sites, setSites] = useState<Site[]>([]);
+  const [mortalityRate, setMortalityRate] = useState<MortalityRateRow | null>(null);
+  const [editingThreshold, setEditingThreshold] = useState(false);
+  const [thresholdInput, setThresholdInput] = useState('');
+  const [savingThreshold, setSavingThreshold] = useState(false);
+  const [thresholdFeedback, setThresholdFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [lines, setLines] = useState<AvailableBatchLine[]>([]);
   const [loadingLines, setLoadingLines] = useState(false);
@@ -149,13 +155,50 @@ export function StokMortalitasPage() {
     setLoadingLines(false);
   }
 
+  async function loadMortalityRate(siteId: string) {
+    if (!siteId) {
+      setMortalityRate(null);
+      return;
+    }
+    const { data } = await supabase.rpc('get_mortality_rates', { p_days: 30 });
+    const row = ((data as MortalityRateRow[] | null) ?? []).find((r) => r.site_id === siteId) ?? null;
+    setMortalityRate(row);
+  }
+
   useEffect(() => {
     setDrafts({});
     setFeedback(null);
     setHistoryLimit(HISTORY_PAGE);
+    setEditingThreshold(false);
+    setThresholdFeedback(null);
     loadSite(selectedSiteId, HISTORY_PAGE);
+    loadMortalityRate(selectedSiteId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
+
+  async function handleSaveThreshold() {
+    const pct = Number(thresholdInput);
+    if (!selectedSiteId || !pct || pct <= 0 || pct > 100 || savingThreshold || !session?.user.id) return;
+
+    setSavingThreshold(true);
+    setThresholdFeedback(null);
+
+    const { error } = await supabase
+      .from('mortality_thresholds')
+      .upsert({ site_id: selectedSiteId, threshold_pct: pct, updated_by: session.user.id }, { onConflict: 'site_id' });
+
+    setSavingThreshold(false);
+
+    if (error) {
+      setThresholdFeedback({ variant: 'danger', message: error.message });
+      return;
+    }
+
+    setThresholdFeedback({ variant: 'success', message: 'Ambang mortalitas berhasil disimpan.' });
+    setEditingThreshold(false);
+    setThresholdInput('');
+    await loadMortalityRate(selectedSiteId);
+  }
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId);
 
@@ -304,6 +347,75 @@ export function StokMortalitasPage() {
             />
           )}
         </label>
+
+        {selectedSiteId && (
+          <div className="space-y-2 rounded-md border border-app-border p-3">
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-app-muted">
+              Tingkat Mortalitas (30 Hari Terakhir)
+            </h2>
+            {thresholdFeedback && (
+              <AlertBanner variant={thresholdFeedback.variant} title={thresholdFeedback.variant === 'success' ? 'Berhasil' : 'Gagal'}>
+                {thresholdFeedback.message}
+              </AlertBanner>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-sm">
+              <span className="text-app-text">
+                {mortalityRate && mortalityRate.mortality_pct !== null
+                  ? `${formatNumber(Math.round(mortalityRate.mortality_pct * 10) / 10)}%`
+                  : 'Belum ada data penerimaan 30 hari terakhir'}
+              </span>
+              {mortalityRate?.threshold_pct != null ? (
+                <span className={mortalityRate.is_overdue ? 'text-app-danger' : 'text-app-muted'}>
+                  Ambang: {formatNumber(mortalityRate.threshold_pct)}%{mortalityRate.is_overdue ? ' — di atas ambang' : ''}
+                </span>
+              ) : (
+                <span className="text-app-muted">Ambang belum diatur</span>
+              )}
+            </div>
+            {isOwner &&
+              (!editingThreshold ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingThreshold(true);
+                    setThresholdInput(mortalityRate?.threshold_pct != null ? String(mortalityRate.threshold_pct) : '');
+                    setThresholdFeedback(null);
+                  }}
+                  className="text-xs font-medium text-app-accent hover:underline"
+                >
+                  {mortalityRate?.threshold_pct != null ? 'Ubah Ambang' : 'Set Ambang'}
+                </button>
+              ) : (
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    type="number"
+                    min="1"
+                    max="100"
+                    step="0.1"
+                    value={thresholdInput}
+                    onChange={(e) => setThresholdInput(e.target.value)}
+                    className={`${inputClass} w-24`}
+                    placeholder="%"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleSaveThreshold}
+                    disabled={!thresholdInput || savingThreshold}
+                    className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+                  >
+                    {savingThreshold ? 'Menyimpan...' : 'Simpan'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditingThreshold(false)}
+                    className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+                  >
+                    Batal
+                  </button>
+                </div>
+              ))}
+          </div>
+        )}
 
         {!selectedSiteId && <p className="text-sm text-app-muted">Pilih site dulu untuk melihat stok.</p>}
         {loadingLines && <p className="text-sm text-app-muted">Memuat stok...</p>}
