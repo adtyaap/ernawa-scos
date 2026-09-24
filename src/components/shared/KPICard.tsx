@@ -22,7 +22,7 @@ export function KPICard({ icon: Icon, label, value, deltaLabel, deltaTone = 'pos
           <Icon size={16} />
         </div>
       </div>
-      <p className="mt-2 text-[28px] font-bold leading-9 tracking-tight tabular-nums text-app-text">{value}</p>
+      <p className="mt-2 text-2xl font-bold leading-8 tracking-tight tabular-nums text-app-text">{value}</p>
       {deltaLabel && (
         <p
           className={`mt-1 text-xs font-medium ${
