@@ -12,7 +12,7 @@ const inputClass =
 const formInputClass =
   'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
 
-const INVITABLE_ROLES: UserRole[] = ['lead_lapangan', 'staf_lapangan', 'investor'];
+const INVITABLE_ROLES: UserRole[] = ['owner', 'lead_lapangan', 'staf_lapangan', 'investor'];
 
 const ROLE_LABELS: Record<UserRole, string> = {
   owner: 'Owner',
@@ -26,15 +26,17 @@ const ROLE_LABELS: Record<UserRole, string> = {
 // semua site; Investor tidak punya akses data operasional. User lapangan
 // tanpa satu pun site tidak melihat data apa pun (gagal-tertutup).
 //
-// Halaman ini mengubah role dan penugasan site user yang SUDAH punya akun. Membuat akun
-// baru (auth.users) butuh Supabase Admin API / service_role key yang TIDAK
-// BOLEH ada di frontend (CLAUDE.md #5) — untuk saat ini akun baru tetap
-// dibuat manual lewat dashboard Supabase Auth + insert ke public.users. UI
-// undangan user butuh Edge Function server-side, itu scope terpisah.
+// Halaman ini (a) MEMBUAT akun baru lewat Edge Function invite-user
+// (server-side, service_role key TIDAK ada di frontend — CLAUDE.md #5), dan
+// (b) mengubah role/penugasan site user yang SUDAH punya akun. `owner` juga
+// bisa dipilih langsung saat membuat akun baru (bukan cuma
+// lead_lapangan/staf_lapangan/investor) — tidak ada batas jumlah akun Owner;
+// role dropdown di tabel di bawah pun sudah lama bisa menaikkan user manapun
+// jadi owner, jadi ini bukan kemampuan baru, cuma jalan pintas.
 //
 // Owner tidak bisa mengubah role dirinya sendiri di sini supaya tidak
 // kehilangan akses owner secara tidak sengaja. Trigger fn_users_protect_role
-// (0003/0012) tetap jadi penjaga sesungguhnya di DB.
+// (0003/0012/0018) tetap jadi penjaga sesungguhnya di DB.
 export function ManajemenUserPage() {
   const { profile, session } = useAuth();
   const isOwner = profile?.role === 'owner';
@@ -256,8 +258,8 @@ export function ManajemenUserPage() {
       <div>
         <h1 className="text-xl font-semibold text-app-text">Admin &gt; Manajemen User</h1>
         <p className="text-sm text-app-muted">
-          Ubah role dan penugasan site user yang sudah punya akun. Akun baru dibuat lewat dashboard Supabase Auth, lalu
-          didaftarkan ke tabel users.
+          Buat akun baru (termasuk Owner) lewat form di bawah, atau ubah role dan penugasan site user yang sudah punya
+          akun.
         </p>
       </div>
 

@@ -12,6 +12,18 @@
 // user_sites ikut terhapus lewat ON DELETE CASCADE) supaya tidak ada akun yatim.
 // Katasandi sementara hanya dikembalikan SEKALI di respons dan tidak pernah
 // ditulis ke log/DB.
+//
+// `owner` termasuk role yang boleh diundang lewat sini (bukan cuma
+// lead_lapangan/staf_lapangan/investor) — tidak ada batas jumlah akun Owner.
+// Ini BUKAN celah keamanan baru: pemanggil tetap wajib owner (langkah 1 di
+// bawah), dan Owner yang sudah ada SUDAH BISA menaikkan role user manapun
+// jadi owner lewat dropdown di ManajemenUserPage (RLS `users_update_by_owner`,
+// migration 0003) — ini cuma menghapus langkah tambahan (invite-lalu-promote)
+// jadi bisa langsung dibuat sebagai owner. `insert public.users` di bawah
+// memakai service_role (admin client), yang dikenali trigger
+// fn_users_protect_role (migration 0018) sbg trusted — TIDAK terhalang
+// pengecekan "hanya owner yang boleh menetapkan role" krn pengecekan itu
+// memang untuk jalur PostgREST/aplikasi biasa, bukan service_role.
 
 import { createClient } from 'jsr:@supabase/supabase-js@2';
 
@@ -21,7 +33,7 @@ const CORS = {
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
 };
 
-const ROLES = ['lead_lapangan', 'staf_lapangan', 'investor'] as const;
+const ROLES = ['owner', 'lead_lapangan', 'staf_lapangan', 'investor'] as const;
 type InviteRole = (typeof ROLES)[number];
 
 function json(body: unknown, status = 200): Response {
@@ -66,7 +78,7 @@ Deno.serve(async (req: Request) => {
 
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Format email tidak valid.' }, 400);
   if (!fullName) return json({ error: 'Nama wajib diisi.' }, 400);
-  if (!ROLES.includes(role)) return json({ error: 'Role harus lead_lapangan, staf_lapangan, atau investor.' }, 400);
+  if (!ROLES.includes(role)) return json({ error: 'Role harus owner, lead_lapangan, staf_lapangan, atau investor.' }, 400);
   if (siteIds.some((id) => typeof id !== 'string')) return json({ error: 'site_ids tidak valid.' }, 400);
 
   // 3. Buat akun (service_role dipakai mulai di sini).
