@@ -158,7 +158,7 @@ export function AnggaranRealisasiPage() {
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {rows.map(({ item, budget, actual, variance, variancePct }) => (
-          <div key={item} className="space-y-2 rounded-lg border border-app-border bg-app-panel p-4">
+          <div key={item} className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-semibold text-app-text">{LINE_ITEM_LABEL[item]}</h2>
               {isOwner && editingItem !== item && (
@@ -191,14 +191,14 @@ export function AnggaranRealisasiPage() {
                 <button
                   type="submit"
                   disabled={saving || editValue === ''}
-                  className="rounded bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+                  className="rounded bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
                 >
                   {saving ? 'Menyimpan...' : 'Simpan'}
                 </button>
                 <button
                   type="button"
                   onClick={() => setEditingItem(null)}
-                  className="rounded border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+                  className="rounded border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
                 >
                   Batal
                 </button>

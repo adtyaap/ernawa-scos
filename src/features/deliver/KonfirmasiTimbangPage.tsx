@@ -167,7 +167,7 @@ export function KonfirmasiTimbangPage() {
           const isConfirming = confirmingId === delivery.id;
 
           return (
-            <div key={delivery.id} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+            <div key={delivery.id} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -217,7 +217,7 @@ export function KonfirmasiTimbangPage() {
                   type="button"
                   onClick={() => handleConfirm(delivery)}
                   disabled={isConfirming}
-                  className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+                  className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
                 >
                   {isConfirming ? 'Menyimpan...' : 'Konfirmasi'}
                 </button>

@@ -13,7 +13,7 @@ export function TabMenu() {
       : NAV_TABS.filter((tab) => !tab.ownerOnly || profile?.role === 'owner');
 
   return (
-    <nav className="flex items-center gap-1">
+    <nav className="flex h-full items-center gap-4">
       {visibleTabs.map((tab) => (
         <NavLink
           key={tab.key}
@@ -21,8 +21,10 @@ export function TabMenu() {
           end={tab.path === '/'}
           className={({ isActive }) =>
             [
-              'rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
-              isActive ? 'bg-app-accent/15 text-app-accent' : 'text-app-muted hover:bg-white/5 hover:text-app-text',
+              'flex h-full items-center border-b-2 px-1 text-[15px] tracking-tight transition-colors',
+              isActive
+                ? 'border-app-accent font-semibold text-app-accent'
+                : 'border-transparent font-medium text-app-muted hover:text-app-text',
             ].join(' ')
           }
         >

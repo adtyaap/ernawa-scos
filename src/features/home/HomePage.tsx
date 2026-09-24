@@ -61,12 +61,9 @@ function formatDays(value: number): string {
 // Dashboard operasional + finansial trading — direstrukturisasi mengikuti
 // FORMAT artifact lama "Lobster Trading Control Tower" (banner target,
 // grid KPI, Peringatan Aktif, breakdown margin 2-kolom, AR aging, footnote
-// data trust), atas permintaan eksplisit user. Tipografi ikut artifact
-// (Fraunces utk judul via `font-display`, IBM Plex Mono utk angka KPI via
-// `font-mono` — lihat tailwind.config.ts) TAPI warna tetap palet gelap
-// aplikasi yang sudah ada (app-bg/app-panel/app-accent/dst) — bukan tema
-// terang "paper" artifact, supaya tidak pecah dari sisa aplikasi yang semua
-// halaman lainnya masih gelap.
+// data trust), atas permintaan eksplisit user. Tampilan visual (warna,
+// tipografi Inter, kartu) mengikuti desain Stitch yang dipakai seluruh
+// aplikasi -- lihat index.css & tailwind.config.ts.
 //
 // KONSOLIDASI: metrik yang sebelumnya cuma ada di FinancePage (CCC, DPO,
 // Margin %, Piutang, breakdown per Produk/Segmen, Data Trust) SEKARANG
@@ -376,9 +373,9 @@ function HomeDashboard() {
   ];
 
   return (
-    <div className="max-w-5xl space-y-6">
+    <div className="space-y-6">
       <div>
-        <p className="font-mono text-xs uppercase tracking-widest text-app-accent">Langkah Pasti · Track Trading</p>
+        <p className="tabular-nums text-xs uppercase tracking-widest text-app-accent">Langkah Pasti · Track Trading</p>
         <h1 className="font-display text-2xl font-semibold text-app-text">Home</h1>
         <p className="text-sm text-app-muted">Ringkasan operasional &amp; finansial. Stok dan metrik selalu dipisah per track, tidak digabung.</p>
       </div>
@@ -405,9 +402,9 @@ function HomeDashboard() {
               {bannerTone === 'ok' ? '✓' : '⚠'} Margin Trading vs Target
             </h3>
             <p className="text-xs text-app-muted">
-              Realisasi <span className="font-mono font-semibold text-app-text">{formatNumber(Math.round((marginPct ?? 0) * 10) / 10)}%</span> vs
-              target <span className="font-mono font-semibold text-app-text">{formatNumber(marginTargetPct ?? 0)}%</span> — gap{' '}
-              <span className="font-mono font-semibold text-app-text">
+              Realisasi <span className="tabular-nums font-semibold text-app-text">{formatNumber(Math.round((marginPct ?? 0) * 10) / 10)}%</span> vs
+              target <span className="tabular-nums font-semibold text-app-text">{formatNumber(marginTargetPct ?? 0)}%</span> — gap{' '}
+              <span className="tabular-nums font-semibold text-app-text">
                 {(marginPct ?? 0) - (marginTargetPct ?? 0) >= 0 ? '+' : ''}
                 {formatNumber(Math.round(((marginPct ?? 0) - (marginTargetPct ?? 0)) * 10) / 10)}pp
               </span>
@@ -480,12 +477,12 @@ function HomeDashboard() {
             <span className="flex items-center gap-2">
               <AlertTriangle size={14} /> Peringatan Aktif
             </span>
-            {!loading && <span className="font-mono text-xs font-normal text-app-muted">{activeAlerts.length} item</span>}
+            {!loading && <span className="tabular-nums text-xs font-normal text-app-muted">{activeAlerts.length} item</span>}
           </h3>
           {loading ? (
             <p className="text-xs text-app-muted">Memuat...</p>
           ) : activeAlerts.length === 0 ? (
-            <div className="rounded-lg border border-app-border bg-app-panel px-4 py-3 text-xs text-app-muted">Tidak ada peringatan aktif saat ini.</div>
+            <div className="rounded-lg border border-app-border bg-app-panel shadow-sm px-4 py-3 text-xs text-app-muted">Tidak ada peringatan aktif saat ini.</div>
           ) : (
             <div className="space-y-1.5">
               {activeAlerts.map((alert) => (
@@ -511,7 +508,7 @@ function HomeDashboard() {
         )}
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Produk</h3>
             {marginByProduct.length === 0 && !marginMixed ? (
               <p className="text-xs text-app-muted">Belum ada data.</p>
@@ -520,7 +517,7 @@ function HomeDashboard() {
                 {marginByProduct.map((row) => (
                   <div key={row.product_id} className="flex items-center justify-between text-xs">
                     <span className="text-app-text">{row.product_name}</span>
-                    <span className="font-mono text-app-muted">
+                    <span className="tabular-nums text-app-muted">
                       {formatCurrency(row.margin)} ({row.margin_pct !== null ? `${formatNumber(Math.round(row.margin_pct * 10) / 10)}%` : '-'})
                     </span>
                   </div>
@@ -528,14 +525,14 @@ function HomeDashboard() {
                 {marginMixed && marginMixed.delivery_count > 0 && (
                   <div className="flex items-center justify-between border-t border-app-border pt-1 text-xs">
                     <span className="text-app-muted">Campuran ({marginMixed.delivery_count} delivery &gt;1 produk, tidak terpecah)</span>
-                    <span className="font-mono text-app-muted">{formatCurrency(marginMixed.margin)}</span>
+                    <span className="tabular-nums text-app-muted">{formatCurrency(marginMixed.margin)}</span>
                   </div>
                 )}
               </div>
             )}
           </div>
 
-          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Segmen Pelanggan</h3>
             {marginBySegment.length === 0 ? (
               <p className="text-xs text-app-muted">Belum ada data.</p>
@@ -544,7 +541,7 @@ function HomeDashboard() {
                 {marginBySegment.map((row) => (
                   <div key={row.segment} className="flex items-center justify-between text-xs">
                     <span className="text-app-text">{SEGMENT_DISPLAY_LABEL[row.segment] ?? row.segment}</span>
-                    <span className="font-mono text-app-muted">
+                    <span className="tabular-nums text-app-muted">
                       {formatCurrency(row.margin)} ({row.margin_pct !== null ? `${formatNumber(Math.round(row.margin_pct * 10) / 10)}%` : '-'})
                     </span>
                   </div>
@@ -554,27 +551,27 @@ function HomeDashboard() {
           </div>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+        <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Aging Piutang</h3>
-            <span className="font-mono text-sm font-semibold text-app-text">{formatCurrency(arBuckets.total)}</span>
+            <span className="tabular-nums text-sm font-semibold text-app-text">{formatCurrency(arBuckets.total)}</span>
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <div className="text-xs">
               <p className="text-app-muted">Belum jatuh tempo</p>
-              <p className="font-mono font-semibold text-app-text">{formatCurrency(arBuckets.current)}</p>
+              <p className="tabular-nums font-semibold text-app-text">{formatCurrency(arBuckets.current)}</p>
             </div>
             <div className="text-xs">
               <p className="text-app-muted">1–30 hari</p>
-              <p className="font-mono font-semibold text-app-text">{formatCurrency(arBuckets.d1_30)}</p>
+              <p className="tabular-nums font-semibold text-app-text">{formatCurrency(arBuckets.d1_30)}</p>
             </div>
             <div className="text-xs">
               <p className="text-app-muted">31–60 hari</p>
-              <p className="font-mono font-semibold text-app-text">{formatCurrency(arBuckets.d31_60)}</p>
+              <p className="tabular-nums font-semibold text-app-text">{formatCurrency(arBuckets.d31_60)}</p>
             </div>
             <div className="text-xs">
               <p className="text-app-muted">&gt;60 hari</p>
-              <p className="font-mono font-semibold text-app-text">{formatCurrency(arBuckets.d60plus)}</p>
+              <p className="tabular-nums font-semibold text-app-text">{formatCurrency(arBuckets.d60plus)}</p>
             </div>
           </div>
           <p className="text-xs text-app-muted">
@@ -582,7 +579,7 @@ function HomeDashboard() {
           </p>
         </div>
 
-        <div className="space-y-1 rounded-lg border border-app-border bg-app-panel p-3">
+        <div className="space-y-1 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Data Trust</h3>
           <p className="text-xs text-app-muted">
             % nilai transaksi yang sudah ditandai terverifikasi (dicocokkan bukti transfer/timbang/invoice) saat dicatat. DPO dihitung dari termin
@@ -591,7 +588,7 @@ function HomeDashboard() {
           <div className="grid grid-cols-1 gap-2 pt-1 sm:grid-cols-2">
             <div className="text-xs">
               <span className="text-app-muted">Penerimaan: </span>
-              <span className="font-mono font-semibold text-app-text">
+              <span className="tabular-nums font-semibold text-app-text">
                 {receivingTrust && receivingTrust.total_value > 0
                   ? `${formatNumber(Math.round((receivingTrust.verified_value / receivingTrust.total_value) * 1000) / 10)}%`
                   : 'Belum ada data'}
@@ -599,7 +596,7 @@ function HomeDashboard() {
             </div>
             <div className="text-xs">
               <span className="text-app-muted">Settlement: </span>
-              <span className="font-mono font-semibold text-app-text">
+              <span className="tabular-nums font-semibold text-app-text">
                 {settlementTrust && settlementTrust.total_value > 0
                   ? `${formatNumber(Math.round((settlementTrust.verified_value / settlementTrust.total_value) * 1000) / 10)}%`
                   : 'Belum ada data'}

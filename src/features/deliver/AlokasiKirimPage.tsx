@@ -265,7 +265,7 @@ export function AlokasiKirimPage() {
         </AlertBanner>
       )}
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <label className="block space-y-1">
             <span className="text-xs font-medium text-app-muted">Site *</span>
@@ -385,7 +385,7 @@ export function AlokasiKirimPage() {
           <button
             type="submit"
             disabled={submitting || !selectedSiteId || selectedRows.length === 0 || (isOverride && !overrideReason.trim())}
-            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {submitting ? 'Menyimpan...' : 'Simpan Delivery & Alokasi'}
           </button>

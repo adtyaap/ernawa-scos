@@ -184,7 +184,7 @@ export function SourcePage() {
                   type="button"
                   onClick={() => handleToggleStatus(row)}
                   disabled={togglingId === row.id}
-                  className={`rounded px-2 py-1 text-xs font-medium hover:bg-white/5 disabled:opacity-40 ${
+                  className={`rounded px-2 py-1 text-xs font-medium hover:bg-app-soft disabled:opacity-40 ${
                     row.status === 'aktif' ? 'text-app-danger' : 'text-app-success'
                   }`}
                 >
@@ -204,7 +204,7 @@ export function SourcePage() {
         <p className="text-sm text-app-muted">Kelola daftar supplier/nelayan/pengepul.</p>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <h2 className="text-sm font-semibold text-app-text">{editingId ? 'Edit Supplier' : 'Tambah Supplier Baru'}</h2>
 
         {formFeedback && (
@@ -280,7 +280,7 @@ export function SourcePage() {
             <button
               type="submit"
               disabled={!formName.trim() || submitting}
-              className="flex items-center gap-1.5 rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+              className="flex items-center gap-1.5 rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               {!editingId && <Plus size={14} />}
               {submitting ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Tambah'}
@@ -289,7 +289,7 @@ export function SourcePage() {
               <button
                 type="button"
                 onClick={cancelEdit}
-                className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-white/5"
+                className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-app-soft"
               >
                 Batal
               </button>

@@ -2,16 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Palet mengikuti desain Stitch "SAP S4HANA ERP Dashboard" (tema terang,
+   gaya Fiori Horizon). Disimpan sebagai channel RGB supaya modifier opacity
+   Tailwind (mis. bg-app-accent/10) benar-benar berfungsi. */
 :root {
-  --color-bg: #0a0a0a;
-  --color-panel: #131313;
-  --color-border: #262626;
-  --color-text: #f5f5f5;
-  --color-muted: #9ca3af;
-  --color-accent: #ff6a3d;
-  --color-success: #22c55e;
-  --color-danger: #ef4444;
-  --color-warning: #f59e0b;
+  --color-bg: 247 249 255; /* #f7f9ff background */
+  --color-panel: 255 255 255; /* #ffffff surface-container-lowest */
+  --color-border: 221 227 238; /* #dde3ee */
+  --color-text: 4 29 49; /* #041d31 on-surface */
+  --color-muted: 65 71 84; /* #414754 on-surface-variant */
+  --color-accent: 0 88 194; /* #0058c2 primary */
+  --color-accent-hover: 0 92 178; /* #005cb2 tertiary */
+  --color-soft: 237 244 255; /* #edf4ff surface-container-low */
+  --color-soft-strong: 217 234 255; /* #d9eaff surface-container-high */
+  --color-success: 16 126 62; /* #107e3e */
+  --color-danger: 186 26 26; /* #ba1a1a error */
+  --color-warning: 195 85 0; /* #c35500 */
 }
 
 html,
@@ -21,13 +27,8 @@ body,
 }
 
 body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  background-color: rgb(var(--color-bg));
+  color: rgb(var(--color-text));
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }

@@ -4,7 +4,7 @@ const toneClasses: Record<BadgeTone, string> = {
   success: 'bg-app-success/15 text-app-success',
   danger: 'bg-app-danger/15 text-app-danger',
   warning: 'bg-app-warning/15 text-app-warning',
-  neutral: 'bg-white/10 text-app-muted',
+  neutral: 'bg-app-soft-strong text-app-muted',
   info: 'bg-app-accent/15 text-app-accent',
 };
 

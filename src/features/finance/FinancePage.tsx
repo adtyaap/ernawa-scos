@@ -324,7 +324,7 @@ export function FinancePage() {
         </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Produk</h3>
             {marginByProduct.length === 0 && !marginMixed ? (
               <p className="text-xs text-app-muted">Belum ada data.</p>
@@ -350,7 +350,7 @@ export function FinancePage() {
             )}
           </div>
 
-          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Margin per Segmen Pelanggan</h3>
             {marginBySegment.length === 0 ? (
               <p className="text-xs text-app-muted">Belum ada data.</p>
@@ -369,7 +369,7 @@ export function FinancePage() {
           </div>
         </div>
 
-        <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
+        <div className="space-y-2 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
           <div className="flex items-center justify-between">
             <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Piutang Belum Tertagih</h3>
             <span className="text-sm font-semibold text-app-text">{formatCurrency(arBuckets.total)}</span>
@@ -399,7 +399,7 @@ export function FinancePage() {
           </div>
         </div>
 
-        <div className="space-y-1 rounded-lg border border-app-border bg-app-panel p-3">
+        <div className="space-y-1 rounded-lg border border-app-border bg-app-panel shadow-sm p-3">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-app-muted">Data Trust</h3>
           <p className="text-xs text-app-muted">
             % nilai transaksi yang sudah ditandai terverifikasi (dicocokkan bukti transfer/timbang/invoice) saat dicatat.
@@ -429,7 +429,7 @@ export function FinancePage() {
             type="button"
             onClick={() => handleExport('margin')}
             disabled={marginRows.length === 0}
-            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-app-soft disabled:opacity-40"
           >
             <Download size={14} /> Unduh Margin (CSV)
           </button>
@@ -437,7 +437,7 @@ export function FinancePage() {
             type="button"
             onClick={() => handleExport('lockup')}
             disabled={lockupRows.length === 0}
-            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-app-soft disabled:opacity-40"
           >
             <Download size={14} /> Unduh Capital Lock-up (CSV)
           </button>
@@ -445,7 +445,7 @@ export function FinancePage() {
             type="button"
             onClick={() => handleExport('receivable')}
             disabled={receivableRows.length === 0}
-            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+            className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-app-soft disabled:opacity-40"
           >
             <Download size={14} /> Unduh Hari Piutang (CSV)
           </button>

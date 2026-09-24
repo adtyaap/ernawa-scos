@@ -15,12 +15,14 @@ interface KPICardProps {
 
 export function KPICard({ icon: Icon, label, value, deltaLabel, deltaTone = 'positive', note }: KPICardProps) {
   return (
-    <div className="rounded-lg border border-app-border bg-app-panel p-4">
-      <div className="flex items-center justify-between">
-        <span className="text-sm text-app-muted">{label}</span>
-        <Icon size={18} className="text-app-accent" />
+    <div className="rounded-lg border border-app-border bg-app-panel p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-start justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-app-muted">{label}</span>
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-app-soft text-app-accent">
+          <Icon size={16} />
+        </div>
       </div>
-      <p className="mt-2 text-2xl font-semibold text-app-text">{value}</p>
+      <p className="mt-2 text-[28px] font-bold leading-9 tracking-tight tabular-nums text-app-text">{value}</p>
       {deltaLabel && (
         <p
           className={`mt-1 text-xs font-medium ${

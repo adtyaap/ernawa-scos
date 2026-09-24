@@ -238,7 +238,7 @@ export function PengaturanAmbangPage() {
         </p>
       </div>
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <div>
           <h2 className="text-sm font-semibold text-app-text">Target Holding (FEFO)</h2>
           <p className="text-xs text-app-muted">
@@ -288,7 +288,7 @@ export function PengaturanAmbangPage() {
               <button
                 type="submit"
                 disabled={!holdingProductId || !holdingHours || savingHolding}
-                className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+                className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
               >
                 {savingHolding ? 'Menyimpan...' : 'Simpan'}
               </button>
@@ -304,7 +304,7 @@ export function PengaturanAmbangPage() {
         />
       </div>
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <div>
           <h2 className="text-sm font-semibold text-app-text">Ambang Mortalitas</h2>
           <p className="text-xs text-app-muted">
@@ -367,14 +367,14 @@ export function PengaturanAmbangPage() {
                       type="button"
                       onClick={() => handleSaveMortality(site.id)}
                       disabled={!mortalityInput || savingMortality}
-                      className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+                      className="rounded-md bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       {savingMortality ? 'Menyimpan...' : 'Simpan'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setEditingMortalitySiteId(null)}
-                      className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+                      className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Batal
                     </button>
@@ -386,7 +386,7 @@ export function PengaturanAmbangPage() {
         </div>
       </div>
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <div>
           <h2 className="text-sm font-semibold text-app-text">Target Margin &amp; Ambang Piutang (Trading)</h2>
           <p className="text-xs text-app-muted">Dipakai KPICard Margin % dan Piutang Belum Tertagih di Finance/Home.</p>
@@ -434,14 +434,14 @@ export function PengaturanAmbangPage() {
               <button
                 type="submit"
                 disabled={!targetInput || savingTarget}
-                className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+                className="rounded-md bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
               >
                 {savingTarget ? 'Menyimpan...' : 'Simpan'}
               </button>
               <button
                 type="button"
                 onClick={() => setEditingTarget(false)}
-                className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+                className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
               >
                 Batal
               </button>
@@ -490,14 +490,14 @@ export function PengaturanAmbangPage() {
               <button
                 type="submit"
                 disabled={!arWatchInput || savingArWatch}
-                className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+                className="rounded-md bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
               >
                 {savingArWatch ? 'Menyimpan...' : 'Simpan'}
               </button>
               <button
                 type="button"
                 onClick={() => setEditingArWatch(false)}
-                className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+                className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
               >
                 Batal
               </button>

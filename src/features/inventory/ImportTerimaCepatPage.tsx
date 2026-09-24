@@ -291,7 +291,7 @@ export function ImportTerimaCepatPage() {
         </p>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <label className="block space-y-1">
           <span className="text-xs font-medium text-app-muted">File Excel (.xlsx)</span>
           <input
@@ -302,7 +302,7 @@ export function ImportTerimaCepatPage() {
               if (file) void handleFile(file);
             }}
             disabled={parsing || importing}
-            className="block w-full text-sm text-app-text file:mr-3 file:rounded-md file:border-0 file:bg-app-accent file:px-3 file:py-2 file:text-sm file:font-semibold file:text-black"
+            className="block w-full text-sm text-app-text file:mr-3 file:rounded-md file:border-0 file:bg-app-accent file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
           />
         </label>
         {parsing && <p className="text-sm text-app-muted">Membaca file...</p>}
@@ -329,7 +329,7 @@ export function ImportTerimaCepatPage() {
               type="button"
               onClick={handleImport}
               disabled={validCount === 0 || importing}
-              className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+              className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
             >
               {importing ? 'Mengimpor...' : `Impor ${validCount} Baris`}
             </button>
@@ -337,7 +337,7 @@ export function ImportTerimaCepatPage() {
 
           <div className="overflow-hidden rounded-lg border border-app-border">
             <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 text-xs uppercase tracking-wide text-app-muted">
+              <thead className="bg-app-soft text-xs uppercase tracking-wide text-app-muted">
                 <tr>
                   <th className="px-3 py-2 font-medium">Baris</th>
                   <th className="px-3 py-2 font-medium">Tanggal</th>

@@ -39,17 +39,17 @@ export function DataTable<T>({
   const colSpan = columns.length + (status ? 1 : 0) + (hasActions ? 1 : 0);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-app-border">
+    <div className="overflow-x-auto rounded-lg border border-app-border bg-app-panel shadow-sm">
       <table className="w-full text-left text-sm">
-        <thead className="bg-white/5 text-xs uppercase tracking-wide text-app-muted">
+        <thead className="bg-app-soft text-[11px] uppercase tracking-wider text-app-text">
           <tr>
             {columns.map((col) => (
-              <th key={col.key} className="px-4 py-2 font-medium">
+              <th key={col.key} className="px-4 py-3 font-semibold">
                 {col.header}
               </th>
             ))}
-            {status && <th className="px-4 py-2 font-medium">Status</th>}
-            {hasActions && <th className="px-4 py-2 text-right font-medium">Aksi</th>}
+            {status && <th className="px-4 py-3 font-semibold">Status</th>}
+            {hasActions && <th className="px-4 py-3 text-right font-semibold">Aksi</th>}
           </tr>
         </thead>
         <tbody className="divide-y divide-app-border">
@@ -61,9 +61,9 @@ export function DataTable<T>({
             </tr>
           )}
           {rows.map((row) => (
-            <tr key={getRowId(row)} className="text-app-text hover:bg-white/5">
+            <tr key={getRowId(row)} className="text-app-text transition-colors hover:bg-app-soft/60">
               {columns.map((col) => (
-                <td key={col.key} className="px-4 py-2">
+                <td key={col.key} className="px-4 py-2.5">
                   {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '')}
                 </td>
               ))}

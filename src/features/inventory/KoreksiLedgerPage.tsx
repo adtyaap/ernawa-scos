@@ -160,7 +160,7 @@ export function KoreksiLedgerPage() {
         </AlertBanner>
       )}
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <label className="block max-w-sm space-y-1">
           <span className="text-xs font-medium text-app-muted">Site *</span>
           <select value={selectedSiteId} onChange={(e) => setSelectedSiteId(e.target.value)} className={inputClass}>
@@ -249,14 +249,14 @@ export function KoreksiLedgerPage() {
                         type="button"
                         onClick={() => handleCorrect(row)}
                         disabled={!reason.trim() || submitting}
-                        className="rounded-md bg-app-accent px-3 py-1.5 text-sm font-semibold text-black disabled:opacity-40"
+                        className="rounded-md bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
                       >
                         {submitting ? 'Menyimpan...' : `Konfirmasi Koreksi ${formatKg(row.qty_kg)}`}
                       </button>
                       <button
                         type="button"
                         onClick={() => setCorrectingId(null)}
-                        className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+                        className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-app-soft"
                       >
                         Batal
                       </button>
@@ -276,7 +276,7 @@ export function KoreksiLedgerPage() {
               setRowLimit(next);
               loadLedger(selectedSiteId, next);
             }}
-            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-app-soft"
           >
             Muat lebih banyak
           </button>

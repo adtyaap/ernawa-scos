@@ -149,7 +149,7 @@ export function PiutangPage() {
           type="button"
           onClick={handleExport}
           disabled={rows.length === 0}
-          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-app-soft disabled:opacity-40"
         >
           <Download size={14} /> Unduh CSV
         </button>

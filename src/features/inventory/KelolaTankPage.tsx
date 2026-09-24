@@ -152,7 +152,7 @@ export function KelolaTankPage() {
       </div>
 
       {isOwner && (
-        <div className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+        <div className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <h2 className="text-sm font-semibold text-app-text">{editingId ? 'Ubah Nama Tank' : 'Tambah Tank Baru'}</h2>
 
           {formFeedback && (
@@ -199,7 +199,7 @@ export function KelolaTankPage() {
               <button
                 type="submit"
                 disabled={!formSiteId || !formName.trim() || submitting}
-                className="flex items-center gap-1.5 rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+                className="flex items-center gap-1.5 rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
               >
                 {!editingId && <Plus size={14} />}
                 {submitting ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : 'Tambah'}
@@ -208,7 +208,7 @@ export function KelolaTankPage() {
                 <button
                   type="button"
                   onClick={cancelEdit}
-                  className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-white/5"
+                  className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-app-soft"
                 >
                   Batal
                 </button>

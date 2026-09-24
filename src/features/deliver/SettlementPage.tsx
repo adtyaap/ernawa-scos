@@ -251,7 +251,7 @@ export function SettlementPage() {
           const isOpen = selectedDeliveryId === delivery.delivery_id;
 
           return (
-            <div key={delivery.delivery_id} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+            <div key={delivery.delivery_id} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <div className="flex items-center gap-2">
@@ -272,7 +272,7 @@ export function SettlementPage() {
                 <button
                   type="button"
                   onClick={() => handleOpenForm(delivery)}
-                  className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black"
+                  className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white"
                 >
                   Buat Settlement
                 </button>
@@ -284,7 +284,7 @@ export function SettlementPage() {
                     <label className="block space-y-1">
                       <span className="text-xs font-medium text-app-muted">Customer *</span>
                       {delivery.customer_id ? (
-                        <p className={`${inputClass} bg-white/5`}>{delivery.customer_name}</p>
+                        <p className={`${inputClass} bg-app-soft`}>{delivery.customer_name}</p>
                       ) : (
                         <select
                           value={formCustomerId}
@@ -362,7 +362,7 @@ export function SettlementPage() {
                       type="button"
                       onClick={() => handleSubmit(delivery)}
                       disabled={submitting}
-                      className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+                      className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
                     >
                       {submitting ? 'Menyimpan...' : 'Simpan Settlement'}
                     </button>
@@ -370,7 +370,7 @@ export function SettlementPage() {
                       type="button"
                       onClick={closeForm}
                       disabled={submitting}
-                      className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-white/5"
+                      className="rounded-md border border-app-border px-4 py-2 text-sm font-medium text-app-muted hover:bg-app-soft"
                     >
                       Batal
                     </button>

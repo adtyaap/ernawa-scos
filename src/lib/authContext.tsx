@@ -43,7 +43,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // Profil (full_name, role) di-fetch sekali di sini, dipakai bersama oleh
-  // UserInfoCard dan halaman manapun yang butuh cek role (mis. SourcePage
+  // TopNavbar dan halaman manapun yang butuh cek role (mis. SourcePage
   // untuk menyembunyikan tombol Edit selain owner) — hindari duplikasi
   // query users di banyak komponen.
   useEffect(() => {

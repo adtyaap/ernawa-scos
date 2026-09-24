@@ -245,14 +245,14 @@ export function KasPanjarPage() {
                       type="button"
                       onClick={() => handleReverse(row)}
                       disabled={!reversalReason.trim() || submitting}
-                      className="rounded bg-app-accent px-2 py-1 text-xs font-semibold text-black disabled:opacity-40"
+                      className="rounded bg-app-accent hover:bg-app-accent-hover px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Konfirmasi
                     </button>
                     <button
                       type="button"
                       onClick={() => setReversingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-white/5"
+                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>
@@ -308,7 +308,7 @@ export function KasPanjarPage() {
         />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+      <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <h2 className="text-sm font-semibold text-app-text">{isOwner ? 'Catat Transaksi Kas' : 'Catat Pengeluaran / Pengembalian'}</h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {isOwner && (
@@ -361,7 +361,7 @@ export function KasPanjarPage() {
         <button
           type="submit"
           disabled={submitting || !formSiteId || !formAmount || (isOwner && !formPicId)}
-          className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+          className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
         >
           {submitting ? 'Menyimpan...' : 'Simpan'}
         </button>

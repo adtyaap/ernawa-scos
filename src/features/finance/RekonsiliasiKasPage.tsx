@@ -215,7 +215,7 @@ export function RekonsiliasiKasPage() {
                       type="button"
                       onClick={() => handleDecision(row.id, true)}
                       disabled={deciding}
-                      className="rounded bg-app-accent px-2 py-1 text-xs font-semibold text-black disabled:opacity-40"
+                      className="rounded bg-app-accent hover:bg-app-accent-hover px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Setujui
                     </button>
@@ -230,7 +230,7 @@ export function RekonsiliasiKasPage() {
                     <button
                       type="button"
                       onClick={() => setDecidingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-white/5"
+                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>
@@ -276,7 +276,7 @@ export function RekonsiliasiKasPage() {
       )}
 
       {!isOwner && (
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+        <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <h2 className="text-sm font-semibold text-app-text">Ajukan Rekonsiliasi</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
@@ -314,7 +314,7 @@ export function RekonsiliasiKasPage() {
           <button
             type="submit"
             disabled={!formSiteId || !formPeriodEnd || formPhysical === '' || submitting}
-            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {submitting ? 'Mengajukan...' : 'Ajukan Rekonsiliasi'}
           </button>

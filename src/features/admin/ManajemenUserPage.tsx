@@ -278,7 +278,7 @@ export function ManajemenUserPage() {
         </AlertBanner>
       )}
 
-      <form onSubmit={handleInvite} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+      <form onSubmit={handleInvite} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <h2 className="text-sm font-semibold text-app-text">Tambah User Baru</h2>
 
         {inviteResult && (
@@ -358,7 +358,7 @@ export function ManajemenUserPage() {
         <button
           type="submit"
           disabled={inviting || !inviteEmail.trim() || !inviteName.trim()}
-          className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+          className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
         >
           {inviting ? 'Membuat akun...' : 'Buat Akun'}
         </button>

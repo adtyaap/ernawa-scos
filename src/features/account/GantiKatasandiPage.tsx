@@ -59,7 +59,7 @@ export function GantiKatasandiPage() {
         </AlertBanner>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+      <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <label className="block space-y-1">
           <span className="text-xs font-medium text-app-muted">Katasandi baru *</span>
           <input
@@ -85,7 +85,7 @@ export function GantiKatasandiPage() {
         <button
           type="submit"
           disabled={saving || !password || !confirm}
-          className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+          className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
         >
           {saving ? 'Menyimpan...' : 'Ganti Katasandi'}
         </button>

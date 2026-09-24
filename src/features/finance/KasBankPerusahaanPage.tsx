@@ -291,14 +291,14 @@ export function KasBankPerusahaanPage() {
                       type="button"
                       onClick={() => handleReverse(row)}
                       disabled={!reversalReason.trim() || submitting}
-                      className="rounded bg-app-accent px-2 py-1 text-xs font-semibold text-black disabled:opacity-40"
+                      className="rounded bg-app-accent hover:bg-app-accent-hover px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Konfirmasi
                     </button>
                     <button
                       type="button"
                       onClick={() => setReversingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-white/5"
+                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>
@@ -343,22 +343,22 @@ export function KasBankPerusahaanPage() {
       )}
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <div className="rounded-lg border border-app-border bg-app-panel p-4">
+        <div className="rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <p className="text-xs font-medium text-app-muted">Saldo Trading</p>
           <p className="text-lg font-semibold text-app-text">{formatCurrency(balancePerTrack.trading)}</p>
         </div>
-        <div className="rounded-lg border border-app-border bg-app-panel p-4">
+        <div className="rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <p className="text-xs font-medium text-app-muted">Saldo Budidaya</p>
           <p className="text-lg font-semibold text-app-text">{formatCurrency(balancePerTrack.budidaya)}</p>
         </div>
-        <div className="rounded-lg border border-app-border bg-app-panel p-4">
+        <div className="rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <p className="text-xs font-medium text-app-muted">Total Gabungan</p>
           <p className="text-lg font-semibold text-app-text">{formatCurrency(balanceTotal)}</p>
         </div>
       </div>
 
       {isOwner && (
-        <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+        <form onSubmit={handleSubmit} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <h2 className="text-sm font-semibold text-app-text">Catat Transaksi Manual</h2>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
@@ -446,7 +446,7 @@ export function KasBankPerusahaanPage() {
               (formCategory === 'opex' && !formOpexCategoryId) ||
               (formCategory === 'tax' && !formTaxType)
             }
-            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {submitting ? 'Menyimpan...' : 'Simpan'}
           </button>
@@ -458,7 +458,7 @@ export function KasBankPerusahaanPage() {
           <h2 className="text-sm font-semibold text-app-text">Opex per Kategori</h2>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {opexBreakdownRows.map(([label, total]) => (
-              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel px-4 py-2">
+              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel shadow-sm px-4 py-2">
                 <span className="text-sm text-app-text">{label}</span>
                 <span className="text-sm font-semibold text-app-text">{formatCurrency(total)}</span>
               </div>
@@ -472,7 +472,7 @@ export function KasBankPerusahaanPage() {
           <h2 className="text-sm font-semibold text-app-text">Pajak per Jenis</h2>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {taxBreakdownRows.map(([label, total]) => (
-              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel px-4 py-2">
+              <div key={label} className="flex items-center justify-between rounded-lg border border-app-border bg-app-panel shadow-sm px-4 py-2">
                 <span className="text-sm text-app-text">{label}</span>
                 <span className="text-sm font-semibold text-app-text">{formatCurrency(total)}</span>
               </div>

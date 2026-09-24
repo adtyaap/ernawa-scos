@@ -248,7 +248,7 @@ export function TerimaCepatPage() {
                 <button
                   type="button"
                   onClick={() => handleDeleteFavorite(fav.id)}
-                  className="rounded-full p-1 text-app-muted hover:bg-white/10 hover:text-app-danger"
+                  className="rounded-full p-1 text-app-muted hover:bg-app-soft-strong hover:text-app-danger"
                   title="Hapus favorit"
                 >
                   <X size={12} />
@@ -260,7 +260,7 @@ export function TerimaCepatPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="grid grid-cols-1 gap-4 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4 sm:grid-cols-2">
           <Field label="Supplier">
             <select
               value={supplierId}
@@ -309,7 +309,7 @@ export function TerimaCepatPage() {
           </Field>
         </div>
 
-        <div className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+        <div className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
           <div className="flex items-center justify-between">
             <h2 className="text-sm font-semibold text-app-text">Produk Diterima</h2>
             <button
@@ -378,7 +378,7 @@ export function TerimaCepatPage() {
           <button
             type="submit"
             disabled={!isFormValid || submitting}
-            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {submitting ? 'Menyimpan...' : 'Simpan Penerimaan'}
           </button>
@@ -411,14 +411,14 @@ export function TerimaCepatPage() {
               type="button"
               onClick={handleSaveFavorite}
               disabled={!favoriteLabel.trim()}
-              className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
+              className="rounded-md bg-app-accent hover:bg-app-accent-hover px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40"
             >
               Simpan
             </button>
             <button
               type="button"
               onClick={() => setSavingFavorite(false)}
-              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
             >
               Batal
             </button>

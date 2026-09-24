@@ -231,13 +231,13 @@ export function RiwayatPenerimaanPage() {
           type="button"
           onClick={handleExport}
           disabled={rows.length === 0}
-          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-white/5 disabled:opacity-40"
+          className="flex items-center gap-1.5 rounded-md border border-app-border px-3 py-1.5 text-xs font-medium text-app-muted hover:bg-app-soft disabled:opacity-40"
         >
           <Download size={14} /> Unduh CSV
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4 sm:grid-cols-3">
         <label className="block space-y-1">
           <span className="text-xs font-medium text-app-muted">Site</span>
           <select value={siteId} onChange={(e) => setSiteId(e.target.value)} className={inputClass}>
@@ -268,7 +268,7 @@ export function RiwayatPenerimaanPage() {
       {!loading && rows.length > 0 && (
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(['trading', 'budidaya'] as Track[]).map((track) => (
-            <div key={track} className="rounded-lg border border-app-border bg-app-panel p-3 text-sm">
+            <div key={track} className="rounded-lg border border-app-border bg-app-panel shadow-sm p-3 text-sm">
               <StatusBadge label={track === 'trading' ? 'Trading' : 'Budidaya'} tone={track === 'trading' ? 'info' : 'success'} />
               <p className="mt-2 text-app-text">
                 {perTrack[track].count === 0
@@ -292,7 +292,7 @@ export function RiwayatPenerimaanPage() {
           <button
             type="button"
             onClick={() => setLimit(limit + PAGE_SIZE)}
-            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+            className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-app-soft"
           >
             Muat lebih banyak
           </button>

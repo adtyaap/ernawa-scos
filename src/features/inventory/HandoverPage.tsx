@@ -191,7 +191,7 @@ export function HandoverPage() {
         </p>
       </div>
 
-      <section className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <section className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <h2 className="text-sm font-semibold text-app-text">Kirim</h2>
 
         {dispatchFeedback && (
@@ -278,7 +278,7 @@ export function HandoverPage() {
           <button
             type="submit"
             disabled={dispatchSubmitting || !fromSiteId || !toSiteId || dispatchRows.length === 0}
-            className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+            className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
           >
             {dispatchSubmitting ? 'Mengirim...' : 'Kirim Handover'}
           </button>
@@ -386,7 +386,7 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
   }
 
   return (
-    <form onSubmit={handleConfirm} className="space-y-3 rounded-lg border border-app-border bg-app-panel p-4">
+    <form onSubmit={handleConfirm} className="space-y-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <p className="text-sm font-medium text-app-text">
           {handover.from_site?.name ?? '-'} &rarr; {handover.to_site?.name ?? '-'}
@@ -435,7 +435,7 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
             <button
               type="button"
               onClick={() => setCancelling(false)}
-              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
+              className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-app-soft"
             >
               Tutup
             </button>
@@ -494,7 +494,7 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
       <button
         type="submit"
         disabled={submitting || !toTankId}
-        className="rounded-md bg-app-accent px-4 py-2 text-sm font-semibold text-black disabled:opacity-40"
+        className="rounded-md bg-app-accent hover:bg-app-accent-hover px-4 py-2 text-sm font-semibold text-white disabled:opacity-40"
       >
         {submitting ? 'Menyimpan...' : 'Konfirmasi Terima'}
       </button>

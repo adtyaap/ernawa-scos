@@ -118,7 +118,7 @@ export function FefoRiskReportPage() {
         />
       </div>
 
-      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel p-4">
+      <div className="space-y-4 rounded-lg border border-app-border bg-app-panel shadow-sm p-4">
         <div>
           <h2 className="text-sm font-semibold text-app-text">Target Holding Saat Ini</h2>
           <p className="text-xs text-app-muted">

@@ -189,7 +189,7 @@ export function AuditLogPage() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel p-4 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 rounded-lg border border-app-border bg-app-panel shadow-sm p-4 sm:grid-cols-4">
         <label className="block space-y-1">
           <span className="text-xs font-medium text-app-muted">Jenis</span>
           <select id="audit-tabel" value={tableName} onChange={(e) => setTableName(e.target.value)} className={inputClass}>
@@ -239,7 +239,7 @@ export function AuditLogPage() {
         <button
           type="button"
           onClick={() => setLimit(limit + PAGE_SIZE)}
-          className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-white/5"
+          className="rounded-md border border-app-border px-3 py-1.5 text-sm text-app-muted hover:bg-app-soft"
         >
           Muat lebih banyak
         </button>
