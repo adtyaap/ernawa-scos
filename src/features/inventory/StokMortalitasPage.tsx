@@ -68,15 +68,10 @@ function formatDateTime(value: string): string {
 // ledger negatif otomatis (append-only, tidak ada UPDATE stok). Guard saldo ada
 // di DB (0014/0021), pengecekan di sini cuma supaya pesan lebih cepat.
 export function StokMortalitasPage() {
-  const { session, profile } = useAuth();
-  const isOwner = profile?.role === 'owner';
+  const { session } = useAuth();
 
   const [sites, setSites] = useState<Site[]>([]);
   const [mortalityRate, setMortalityRate] = useState<MortalityRateRow | null>(null);
-  const [editingThreshold, setEditingThreshold] = useState(false);
-  const [thresholdInput, setThresholdInput] = useState('');
-  const [savingThreshold, setSavingThreshold] = useState(false);
-  const [thresholdFeedback, setThresholdFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
   const [selectedSiteId, setSelectedSiteId] = useState('');
   const [lines, setLines] = useState<AvailableBatchLine[]>([]);
   const [loadingLines, setLoadingLines] = useState(false);
@@ -169,36 +164,10 @@ export function StokMortalitasPage() {
     setDrafts({});
     setFeedback(null);
     setHistoryLimit(HISTORY_PAGE);
-    setEditingThreshold(false);
-    setThresholdFeedback(null);
     loadSite(selectedSiteId, HISTORY_PAGE);
     loadMortalityRate(selectedSiteId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSiteId]);
-
-  async function handleSaveThreshold() {
-    const pct = Number(thresholdInput);
-    if (!selectedSiteId || !pct || pct <= 0 || pct > 100 || savingThreshold || !session?.user.id) return;
-
-    setSavingThreshold(true);
-    setThresholdFeedback(null);
-
-    const { error } = await supabase
-      .from('mortality_thresholds')
-      .upsert({ site_id: selectedSiteId, threshold_pct: pct, updated_by: session.user.id }, { onConflict: 'site_id' });
-
-    setSavingThreshold(false);
-
-    if (error) {
-      setThresholdFeedback({ variant: 'danger', message: error.message });
-      return;
-    }
-
-    setThresholdFeedback({ variant: 'success', message: 'Ambang mortalitas berhasil disimpan.' });
-    setEditingThreshold(false);
-    setThresholdInput('');
-    await loadMortalityRate(selectedSiteId);
-  }
 
   const selectedSite = sites.find((s) => s.id === selectedSiteId);
 
@@ -353,11 +322,6 @@ export function StokMortalitasPage() {
             <h2 className="text-xs font-semibold uppercase tracking-wide text-app-muted">
               Tingkat Mortalitas (30 Hari Terakhir)
             </h2>
-            {thresholdFeedback && (
-              <AlertBanner variant={thresholdFeedback.variant} title={thresholdFeedback.variant === 'success' ? 'Berhasil' : 'Gagal'}>
-                {thresholdFeedback.message}
-              </AlertBanner>
-            )}
             <div className="flex flex-wrap items-center gap-3 text-sm">
               <span className="text-app-text">
                 {mortalityRate && mortalityRate.mortality_pct !== null
@@ -369,51 +333,9 @@ export function StokMortalitasPage() {
                   Ambang: {formatNumber(mortalityRate.threshold_pct)}%{mortalityRate.is_overdue ? ' — di atas ambang' : ''}
                 </span>
               ) : (
-                <span className="text-app-muted">Ambang belum diatur</span>
+                <span className="text-app-muted">Ambang belum diatur — atur di Admin &gt; Pengaturan Ambang</span>
               )}
             </div>
-            {isOwner &&
-              (!editingThreshold ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingThreshold(true);
-                    setThresholdInput(mortalityRate?.threshold_pct != null ? String(mortalityRate.threshold_pct) : '');
-                    setThresholdFeedback(null);
-                  }}
-                  className="text-xs font-medium text-app-accent hover:underline"
-                >
-                  {mortalityRate?.threshold_pct != null ? 'Ubah Ambang' : 'Set Ambang'}
-                </button>
-              ) : (
-                <div className="flex flex-wrap items-center gap-2">
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    step="0.1"
-                    value={thresholdInput}
-                    onChange={(e) => setThresholdInput(e.target.value)}
-                    className={`${inputClass} w-24`}
-                    placeholder="%"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleSaveThreshold}
-                    disabled={!thresholdInput || savingThreshold}
-                    className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
-                  >
-                    {savingThreshold ? 'Menyimpan...' : 'Simpan'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingThreshold(false)}
-                    className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
-                  >
-                    Batal
-                  </button>
-                </div>
-              ))}
           </div>
         )}
 

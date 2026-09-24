@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Clock, Download, Percent, Receipt, RefreshCw, Wallet } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
-import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
+import { AlertBanner } from '../../components/shared/AlertBanner';
 import { KPICard } from '../../components/shared/KPICard';
 import { formatCurrency, formatNumber, todayLocalDate } from '../../lib/format';
 import { downloadCsv } from '../../lib/exportCsv';
@@ -27,9 +27,6 @@ const SEGMENT_DISPLAY_LABEL: Record<string, string> = {
 
 const SPARSE_DATA_THRESHOLD = 5;
 
-const inputClass =
-  'w-full rounded-md border border-app-border bg-app-bg px-3 py-2 text-sm text-app-text focus:border-app-accent focus:outline-none disabled:opacity-40';
-
 function formatDays(value: number): string {
   return `${formatNumber(Math.round(value * 10) / 10)} hari`;
 }
@@ -49,9 +46,8 @@ function formatDays(value: number): string {
 //   - Hari piutang riil: rata-rata settled_at - created_at (BUKAN due_date),
 //     dari v_trading_receivable_cycle (per settlement term yang lunas).
 export function FinancePage() {
-  const { profile, profileLoading, session } = useAuth();
+  const { profile, profileLoading } = useAuth();
   const isInvestor = profile?.role === 'investor';
-  const isOwner = profile?.role === 'owner';
 
   const [marginRows, setMarginRows] = useState<TradingDeliveryMargin[]>([]);
   const [lockupRows, setLockupRows] = useState<TradingCapitalLockup[]>([]);
@@ -66,16 +62,7 @@ export function FinancePage() {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   const [marginTargetPct, setMarginTargetPct] = useState<number | null>(null);
-  const [editingTarget, setEditingTarget] = useState(false);
-  const [targetInput, setTargetInput] = useState('');
-  const [savingTarget, setSavingTarget] = useState(false);
-  const [targetFeedback, setTargetFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
-
   const [arWatchDays, setArWatchDays] = useState<number | null>(null);
-  const [editingArWatch, setEditingArWatch] = useState(false);
-  const [arWatchInput, setArWatchInput] = useState('');
-  const [savingArWatch, setSavingArWatch] = useState(false);
-  const [arWatchFeedback, setArWatchFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
 
   const [unpaidTermRows, setUnpaidTermRows] = useState<SettlementAgingRow[]>([]);
 
@@ -175,62 +162,6 @@ export function FinancePage() {
     const totalMargin = marginRows.reduce((sum, r) => sum + r.margin, 0);
     return totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : null;
   }, [marginRows]);
-
-  async function handleSaveTarget(event: FormEvent) {
-    event.preventDefault();
-    const pct = Number(targetInput);
-    if (!pct || pct <= 0 || pct > 100 || savingTarget || !session?.user.id) return;
-
-    setSavingTarget(true);
-    setTargetFeedback(null);
-
-    const { error } = await supabase
-      .from('finance_targets')
-      .upsert({ track: 'trading', margin_target_pct: pct, updated_by: session.user.id }, { onConflict: 'track' });
-
-    setSavingTarget(false);
-
-    if (error) {
-      setTargetFeedback({ variant: 'danger', message: error.message });
-      return;
-    }
-
-    setTargetFeedback({ variant: 'success', message: 'Target margin berhasil disimpan.' });
-    setEditingTarget(false);
-    setTargetInput('');
-    await loadTarget();
-  }
-
-  async function handleSaveArWatch(event: FormEvent) {
-    event.preventDefault();
-    const days = Number(arWatchInput);
-    if (!days || days <= 0 || savingArWatch || !session?.user.id) return;
-
-    if (marginTargetPct === null) {
-      setArWatchFeedback({ variant: 'danger', message: 'Set Target Margin dulu sebelum mengatur ambang piutang (satu baris config per track).' });
-      return;
-    }
-
-    setSavingArWatch(true);
-    setArWatchFeedback(null);
-
-    const { error } = await supabase.from('finance_targets').upsert(
-      { track: 'trading', margin_target_pct: marginTargetPct, ar_watch_days: days, updated_by: session.user.id },
-      { onConflict: 'track' },
-    );
-
-    setSavingArWatch(false);
-
-    if (error) {
-      setArWatchFeedback({ variant: 'danger', message: error.message });
-      return;
-    }
-
-    setArWatchFeedback({ variant: 'success', message: 'Ambang piutang lewat tempo berhasil disimpan.' });
-    setEditingArWatch(false);
-    setArWatchInput('');
-    await loadTarget();
-  }
 
   const arBuckets = useMemo(() => {
     const buckets = { current: 0, d1_30: 0, d31_60: 0, d60plus: 0, total: 0 };
@@ -387,57 +318,10 @@ export function FinancePage() {
           />
         </div>
 
-        {isOwner && (
-          <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
-            {targetFeedback && (
-              <AlertBanner variant={targetFeedback.variant} title={targetFeedback.variant === 'success' ? 'Berhasil' : 'Gagal'}>
-                {targetFeedback.message}
-              </AlertBanner>
-            )}
-            {!editingTarget ? (
-              <button
-                type="button"
-                onClick={() => {
-                  setEditingTarget(true);
-                  setTargetInput(marginTargetPct !== null ? String(marginTargetPct) : '');
-                  setTargetFeedback(null);
-                }}
-                className="text-xs font-medium text-app-accent hover:underline"
-              >
-                {marginTargetPct !== null ? 'Ubah Target Margin' : 'Set Target Margin'}
-              </button>
-            ) : (
-              <form onSubmit={handleSaveTarget} className="flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-2 text-xs text-app-muted">
-                  Target margin trading (%):
-                  <input
-                    type="number"
-                    min="1"
-                    max="100"
-                    step="0.1"
-                    value={targetInput}
-                    onChange={(e) => setTargetInput(e.target.value)}
-                    className={`${inputClass} w-24`}
-                  />
-                </label>
-                <button
-                  type="submit"
-                  disabled={!targetInput || savingTarget}
-                  className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
-                >
-                  {savingTarget ? 'Menyimpan...' : 'Simpan'}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEditingTarget(false)}
-                  className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
-                >
-                  Batal
-                </button>
-              </form>
-            )}
-          </div>
-        )}
+        <p className="text-xs text-app-muted">
+          Target margin: {marginTargetPct !== null ? `${marginTargetPct}%` : 'belum diatur'} — ubah di Admin &gt;
+          Pengaturan Ambang.
+        </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="space-y-2 rounded-lg border border-app-border bg-app-panel p-3">
@@ -509,61 +393,10 @@ export function FinancePage() {
             </div>
           </div>
 
-          {isOwner && (
-            <div className="space-y-1 border-t border-app-border pt-2">
-              {arWatchFeedback && (
-                <AlertBanner variant={arWatchFeedback.variant} title={arWatchFeedback.variant === 'success' ? 'Berhasil' : 'Gagal'}>
-                  {arWatchFeedback.message}
-                </AlertBanner>
-              )}
-              {!editingArWatch ? (
-                <div className="flex items-center gap-2 text-xs">
-                  <span className="text-app-muted">
-                    Ambang alert piutang: {arWatchDays !== null ? `${arWatchDays} hari lewat tempo` : 'belum diatur (alert tidak aktif)'}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setEditingArWatch(true);
-                      setArWatchInput(arWatchDays !== null ? String(arWatchDays) : '');
-                      setArWatchFeedback(null);
-                    }}
-                    className="font-medium text-app-accent hover:underline"
-                  >
-                    {arWatchDays !== null ? 'Ubah' : 'Set Ambang'}
-                  </button>
-                </div>
-              ) : (
-                <form onSubmit={handleSaveArWatch} className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-2 text-xs text-app-muted">
-                    Ambang (hari):
-                    <input
-                      type="number"
-                      min="1"
-                      step="1"
-                      value={arWatchInput}
-                      onChange={(e) => setArWatchInput(e.target.value)}
-                      className={`${inputClass} w-20`}
-                    />
-                  </label>
-                  <button
-                    type="submit"
-                    disabled={!arWatchInput || savingArWatch}
-                    className="rounded-md bg-app-accent px-3 py-1.5 text-xs font-semibold text-black disabled:opacity-40"
-                  >
-                    {savingArWatch ? 'Menyimpan...' : 'Simpan'}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setEditingArWatch(false)}
-                    className="rounded-md border border-app-border px-3 py-1.5 text-xs text-app-muted hover:bg-white/5"
-                  >
-                    Batal
-                  </button>
-                </form>
-              )}
-            </div>
-          )}
+          <div className="border-t border-app-border pt-2 text-xs text-app-muted">
+            Ambang alert piutang: {arWatchDays !== null ? `${arWatchDays} hari lewat tempo` : 'belum diatur (alert tidak aktif)'} —
+            ubah di Admin &gt; Pengaturan Ambang.
+          </div>
         </div>
 
         <div className="space-y-1 rounded-lg border border-app-border bg-app-panel p-3">

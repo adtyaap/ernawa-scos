@@ -70,8 +70,8 @@ function formatDays(value: number): string {
 //
 // KONSOLIDASI: metrik yang sebelumnya cuma ada di FinancePage (CCC, DPO,
 // Margin %, Piutang, breakdown per Produk/Segmen, Data Trust) SEKARANG
-// JUGA tampil di sini, read-only (edit target/ambang tetap di FinancePage
-// & StokMortalitasPage — Home bukan tempat mengubah config, biar tidak ada
+// JUGA tampil di sini, read-only (edit target/ambang ada di Admin >
+// Pengaturan Ambang — Home bukan tempat mengubah config, biar tidak ada
 // dua tempat yang bisa mengubah baris config yang sama). SELALU per track
 // (CLAUDE.md #1) — trading dapat isi penuh, budidaya tetap placeholder
 // "belum ada data operasional" krn memang belum beroperasi.
@@ -578,7 +578,7 @@ function HomeDashboard() {
             </div>
           </div>
           <p className="text-xs text-app-muted">
-            Ambang alert: {arWatchDays !== null ? `${arWatchDays} hari lewat tempo` : 'belum diatur'} — ubah di halaman Finance.
+            Ambang alert: {arWatchDays !== null ? `${arWatchDays} hari lewat tempo` : 'belum diatur'} — ubah di Admin &gt; Pengaturan Ambang.
           </p>
         </div>
 

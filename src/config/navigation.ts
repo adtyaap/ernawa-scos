@@ -88,6 +88,7 @@ export const NAV_TABS: TabConfig[] = [
     // penjaga sesungguhnya, sesuai catatan di atas).
     submenu: [
       { label: 'Ganti Katasandi', path: '/akun/katasandi' },
+      { label: 'Pengaturan Ambang', path: '/admin/pengaturan-ambang' },
       { label: 'Manajemen User', path: '/admin/user' },
       { label: 'Audit Log', path: '/admin/audit' },
     ],

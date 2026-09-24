@@ -43,6 +43,7 @@ const KasBankPerusahaanPage = lazyPage(() => import('./features/finance/KasBankP
 const AnggaranRealisasiPage = lazyPage(() => import('./features/finance/AnggaranRealisasiPage'), 'AnggaranRealisasiPage');
 const KelolaKategoriOpexPage = lazyPage(() => import('./features/finance/KelolaKategoriOpexPage'), 'KelolaKategoriOpexPage');
 const GantiKatasandiPage = lazyPage(() => import('./features/account/GantiKatasandiPage'), 'GantiKatasandiPage');
+const PengaturanAmbangPage = lazyPage(() => import('./features/admin/PengaturanAmbangPage'), 'PengaturanAmbangPage');
 const ManajemenUserPage = lazyPage(() => import('./features/admin/ManajemenUserPage'), 'ManajemenUserPage');
 const AuditLogPage = lazyPage(() => import('./features/admin/AuditLogPage'), 'AuditLogPage');
 
@@ -84,6 +85,7 @@ export default function App() {
               <Route path="/finance/kategori-opex" element={<KelolaKategoriOpexPage />} />
               <Route path="/akun/katasandi" element={<GantiKatasandiPage />} />
               <Route path="/admin" element={<ComingSoonPage title="Admin" />} />
+              <Route path="/admin/pengaturan-ambang" element={<PengaturanAmbangPage />} />
               <Route path="/admin/user" element={<ManajemenUserPage />} />
               <Route path="/admin/audit" element={<AuditLogPage />} />
             </Routes>
