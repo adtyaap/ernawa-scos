@@ -18,7 +18,7 @@ export interface TabConfig {
 }
 
 export const NAV_TABS: TabConfig[] = [
-  { key: 'home', label: 'Home', path: '/', submenu: [{ label: 'Ganti Katasandi', path: '/akun/katasandi' }] },
+  { key: 'home', label: 'Home', path: '/', submenu: [] },
   {
     key: 'source',
     label: 'Source',
@@ -80,8 +80,14 @@ export const NAV_TABS: TabConfig[] = [
     key: 'admin',
     label: 'Admin',
     path: '/admin',
-    ownerOnly: true,
+    // Tab ini SENGAJA visible utk semua role (bukan lagi ownerOnly) krn
+    // Ganti Katasandi dipakai semua user, bukan cuma owner. Manajemen User &
+    // Audit Log tetap owner-only lewat guard internal di masing-masing
+    // halaman (bukan lewat penyembunyian tab) -- lead/staf yang klik akan
+    // lihat pesan "tidak berwenang", bukan celah keamanan (RLS DB tetap jadi
+    // penjaga sesungguhnya, sesuai catatan di atas).
     submenu: [
+      { label: 'Ganti Katasandi', path: '/akun/katasandi' },
       { label: 'Manajemen User', path: '/admin/user' },
       { label: 'Audit Log', path: '/admin/audit' },
     ],

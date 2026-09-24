@@ -49,7 +49,7 @@ export function GantiKatasandiPage() {
   return (
     <div className="max-w-md space-y-6">
       <div>
-        <h1 className="text-xl font-semibold text-app-text">Home &gt; Ganti Katasandi</h1>
+        <h1 className="text-xl font-semibold text-app-text">Admin &gt; Ganti Katasandi</h1>
         <p className="text-sm text-app-muted">Ganti katasandi akun yang sedang Anda pakai.</p>
       </div>
 
