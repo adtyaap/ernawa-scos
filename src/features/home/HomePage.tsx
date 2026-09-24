@@ -71,6 +71,7 @@ function HomeDashboard() {
   const [overdueSettlements, setOverdueSettlements] = useState<SettlementAgingRow[]>([]);
   const [marginAlerts, setMarginAlerts] = useState<ActiveAlert[]>([]);
   const [mortalityRates, setMortalityRates] = useState<MortalityRateRow[]>([]);
+  const [arWatchDays, setArWatchDays] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,7 +101,7 @@ function HomeDashboard() {
           supabase.rpc('get_fefo_risk_report'),
           supabase.from('v_settlements_aging').select('*').is('settled_at', null).lt('days_until_due', 0),
           supabase.from('v_trading_delivery_margin').select('*'),
-          supabase.from('finance_targets').select('track, margin_target_pct'),
+          supabase.from('finance_targets').select('track, margin_target_pct, ar_watch_days'),
           supabase.rpc('get_mortality_rates', { p_days: 30 }),
         ]);
 
@@ -133,11 +134,12 @@ function HomeDashboard() {
       // tidak pernah menghasilkan alert (bukan bug, konsisten dgn placeholder
       // "belum ada data operasional" di halaman Finance).
       const marginRows = (marginResult.data as TradingDeliveryMargin[]) ?? [];
-      const targets = (targetResult.data as { track: string; margin_target_pct: number }[]) ?? [];
+      const targets = (targetResult.data as { track: string; margin_target_pct: number; ar_watch_days: number | null }[]) ?? [];
       const totalRevenue = marginRows.reduce((sum, r) => sum + r.revenue, 0);
       const totalMargin = marginRows.reduce((sum, r) => sum + r.margin, 0);
       const tradingMarginPct = totalRevenue > 0 ? (totalMargin / totalRevenue) * 100 : null;
       const tradingTarget = targets.find((t) => t.track === 'trading')?.margin_target_pct ?? null;
+      setArWatchDays(targets.find((t) => t.track === 'trading')?.ar_watch_days ?? null);
       const newMarginAlerts: ActiveAlert[] = [];
       if (tradingMarginPct !== null && tradingTarget !== null && tradingMarginPct < tradingTarget) {
         const gap = tradingMarginPct - tradingTarget;
@@ -188,15 +190,25 @@ function HomeDashboard() {
       body: `${row.site_name} (${row.tank_name}) — sisa ${formatKg(row.balance_kg)}, ambang ${row.max_holding_hours} jam.`,
     };
   });
-  const arAlerts: ActiveAlert[] = overdueSettlements.map((row) => {
-    const overdueDays = row.days_until_due !== null ? Math.abs(row.days_until_due) : 0;
-    return {
-      id: `ar-${row.settlement_id}`,
-      severity: overdueDays > 60 ? 'kritis' : 'peringatan',
-      title: `Piutang lewat tempo ${formatNumber(overdueDays)} hari`,
-      body: `${row.customer_name} — ${formatCurrency(row.amount)}.`,
-    };
-  });
+  // Alert piutang HANYA aktif kalau Owner sudah mengisi ambang (ar_watch_days,
+  // migration 0047) -- konsisten pola product_holding_policy/mortality_thresholds:
+  // tanpa ambang, tidak ada basis menilai "lewat ambang", jadi tidak ada alert
+  // sama sekali (bukan cuma "amount > 0" spt sebelumnya, yang keliru selalu
+  // aktif tanpa threshold nyata).
+  const arAlerts: ActiveAlert[] =
+    arWatchDays === null
+      ? []
+      : overdueSettlements
+          .filter((row) => row.track === 'trading' && (row.days_until_due !== null ? Math.abs(row.days_until_due) : 0) > arWatchDays)
+          .map((row) => {
+            const overdueDays = row.days_until_due !== null ? Math.abs(row.days_until_due) : 0;
+            return {
+              id: `ar-${row.settlement_id}`,
+              severity: overdueDays > 60 ? 'kritis' : 'peringatan',
+              title: `Piutang lewat tempo ${formatNumber(overdueDays)} hari`,
+              body: `${row.customer_name} — ${formatCurrency(row.amount)} (ambang ${arWatchDays} hari).`,
+            };
+          });
   const mortalityAlerts: ActiveAlert[] = mortalityRates.map((row) => {
     const ratio = row.threshold_pct && row.mortality_pct ? row.mortality_pct / row.threshold_pct : 0;
     return {

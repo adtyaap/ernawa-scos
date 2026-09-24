@@ -655,18 +655,21 @@ export type Database = {
       }
       finance_targets: {
         Row: {
+          ar_watch_days: number | null
           margin_target_pct: number
           track: string
           updated_at: string
           updated_by: string | null
         }
         Insert: {
+          ar_watch_days?: number | null
           margin_target_pct: number
           track: string
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
+          ar_watch_days?: number | null
           margin_target_pct?: number
           track?: string
           updated_at?: string
@@ -1893,6 +1896,7 @@ export type Database = {
           mode: Database["public"]["Enums"]["settlement_mode"] | null
           settled_at: string | null
           settlement_id: string | null
+          track: string | null
         }
         Relationships: [
           {
@@ -2260,6 +2264,7 @@ export type Database = {
           mode: Database["public"]["Enums"]["settlement_mode"] | null
           settled_at: string | null
           settlement_id: string | null
+          track: string | null
         }[]
         SetofOptions: {
           from: "*"

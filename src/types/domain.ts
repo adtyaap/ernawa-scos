@@ -148,6 +148,7 @@ export interface SettlementAgingRow {
   due_date: string | null;
   settled_at: string | null;
   days_until_due: number | null;
+  track: string;
 }
 
 // Hasil view v_trading_delivery_margin — migration 0011. Granularitas per
