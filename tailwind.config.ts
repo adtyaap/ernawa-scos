@@ -6,13 +6,14 @@ export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
-      // Tipografi mengikuti desain Stitch: Inter untuk semua teks (judul,
-      // isi, label, angka KPI). font-display dipertahankan sbg alias supaya
-      // pemakaian lama tetap valid.
+      // Tipografi mengikuti Stitch "Web ERP System Design": Plus Jakarta Sans
+      // utk semua teks (judul, isi, label), JetBrains Mono tersedia lewat
+      // font-mono utk kode/angka teknis (belum dipaksa ke semua angka KPI --
+      // lihat catatan di KPICard). font-display dipertahankan sbg alias.
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
+        sans: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
       // Sudut kontrol (input/tombol) lebih tegas spt Fiori; kartu tetap 8px.
       borderRadius: {

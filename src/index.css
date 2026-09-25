@@ -2,22 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Palet mengikuti desain Stitch "SAP S4HANA ERP Dashboard" (tema terang,
-   gaya Fiori Horizon). Disimpan sebagai channel RGB supaya modifier opacity
-   Tailwind (mis. bg-app-accent/10) benar-benar berfungsi. */
+/* Palet mengikuti proyek Stitch "Web ERP System Design" (screen: Home,
+   Source/Supplier, Live Inventory, Finance — token diambil dari config
+   tailwind yang benar-benar dipakai 5 dari 7 screen, bukan 2 screen lama yg
+   beda iterasi). Disimpan sebagai channel RGB supaya modifier opacity
+   Tailwind (mis. bg-app-accent/10) benar-benar berfungsi.
+   --color-warning TIDAK diganti (skema baru tidak punya token "warning"
+   terpisah dari "error" — tetap pakai amber lama yg kontrasnya sudah
+   diverifikasi, supaya beda visual dgn danger/merah tetap jelas). */
 :root {
-  --color-bg: 247 249 255; /* #f7f9ff background */
+  --color-bg: 250 248 255; /* #faf8ff surface/background */
   --color-panel: 255 255 255; /* #ffffff surface-container-lowest */
-  --color-border: 221 227 238; /* #dde3ee */
-  --color-text: 4 29 49; /* #041d31 on-surface */
-  --color-muted: 65 71 84; /* #414754 on-surface-variant */
-  --color-accent: 0 88 194; /* #0058c2 primary */
-  --color-accent-hover: 0 92 178; /* #005cb2 tertiary */
-  --color-soft: 237 244 255; /* #edf4ff surface-container-low */
-  --color-soft-strong: 217 234 255; /* #d9eaff surface-container-high */
-  --color-success: 16 126 62; /* #107e3e */
-  --color-danger: 186 26 26; /* #ba1a1a error */
-  --color-warning: 195 85 0; /* #c35500 */
+  --color-border: 192 199 209; /* #c0c7d1 outline-variant */
+  --color-text: 19 27 46; /* #131b2e on-surface */
+  --color-muted: 64 71 79; /* #40474f on-surface-variant */
+  --color-accent: 3 105 161; /* #0369a1 primary-container (tombol/tab aktif) */
+  --color-accent-hover: 2 132 199; /* #0284c7 — hover state persis sesuai style guide Stitch */
+  --color-soft: 242 243 255; /* #f2f3ff surface-container-low */
+  --color-soft-strong: 226 231 255; /* #e2e7ff surface-container-high */
+  --color-success: 6 95 70; /* #065f46 — warna teks chip "Aktif/Fresh" di style guide Stitch */
+  --color-danger: 186 26 26; /* #ba1a1a error — sudah identik, tidak berubah */
+  --color-warning: 163 71 0; /* #a34700 — darkened dari #c35500, kontras ~4.5:1 thd panel putih hanya pas-pasan (borderline AA), #a34700 ~6:1 */
 }
 
 html,
@@ -29,6 +34,6 @@ body,
 body {
   background-color: rgb(var(--color-bg));
   color: rgb(var(--color-text));
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
