@@ -195,7 +195,7 @@ export function RekonsiliasiKasPage() {
                       setDecisionReason('');
                       setFeedback(null);
                     }}
-                    className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                    className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                   >
                     Proses
                   </button>
@@ -215,7 +215,7 @@ export function RekonsiliasiKasPage() {
                       type="button"
                       onClick={() => handleDecision(row.id, true)}
                       disabled={deciding}
-                      className="rounded bg-app-accent hover:bg-app-accent-hover px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                      className="rounded bg-app-accent hover:bg-app-accent-hover px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Setujui
                     </button>
@@ -223,14 +223,14 @@ export function RekonsiliasiKasPage() {
                       type="button"
                       onClick={() => handleDecision(row.id, false)}
                       disabled={deciding || !decisionReason.trim()}
-                      className="rounded bg-app-danger px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                      className="rounded bg-app-danger px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Tolak
                     </button>
                     <button
                       type="button"
                       onClick={() => setDecidingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
+                      className="rounded border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>

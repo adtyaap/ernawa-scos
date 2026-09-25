@@ -51,9 +51,13 @@ export function TopNavbar() {
         </div>
 
         <div className="hidden max-w-2xl flex-1 px-3 md:block">
+          <label htmlFor="topnav-search" className="sr-only">
+            Cari
+          </label>
           <div className="relative flex items-center">
             <Search size={16} className="pointer-events-none absolute left-3 text-app-muted" />
             <input
+              id="topnav-search"
               type="text"
               placeholder="Cari..."
               className="w-full rounded-md bg-app-soft py-1.5 pl-9 pr-3 text-xs text-app-text placeholder:text-app-muted focus:bg-app-panel focus:outline-none focus:ring-2 focus:ring-app-accent"
@@ -86,6 +90,7 @@ export function TopNavbar() {
                 type="button"
                 onClick={() => supabase.auth.signOut()}
                 title="Keluar"
+                aria-label="Keluar dari akun"
                 className="rounded-md p-2 text-app-muted transition-colors hover:bg-app-soft hover:text-app-danger"
               >
                 <LogOut size={16} />

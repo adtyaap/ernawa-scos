@@ -283,20 +283,20 @@ export function LogisticsPage() {
                 value={actionInput}
                 onChange={(e) => setActionInput(e.target.value)}
                 placeholder={action.kind === 'delivered' ? 'Mortalitas transit (kg)' : 'Alasan batal'}
-                className="w-40 rounded-md border border-app-border bg-app-bg px-2 py-1 text-xs"
+                className="w-40 rounded-md border border-app-border bg-app-bg px-3 py-2 text-xs"
               />
               <button
                 type="button"
                 onClick={() => handleConfirmAction(r)}
                 disabled={savingId === r.id}
-                className="rounded-md bg-app-accent px-2 py-1 text-xs font-semibold text-white hover:bg-app-accent-hover disabled:opacity-40"
+                className="rounded-md bg-app-accent px-3 py-2 text-xs font-semibold text-white hover:bg-app-accent-hover disabled:opacity-40"
               >
                 Simpan
               </button>
               <button
                 type="button"
                 onClick={() => setAction(null)}
-                className="rounded-md px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
+                className="rounded-md px-3 py-2 text-xs text-app-muted hover:bg-app-soft"
               >
                 Batal
               </button>
@@ -318,7 +318,7 @@ export function LogisticsPage() {
                     void updateStatus(r, next);
                   }
                 }}
-                className={`rounded px-2 py-1 text-xs font-medium disabled:opacity-40 ${
+                className={`rounded px-3 py-2 text-xs font-medium disabled:opacity-40 ${
                   next === 'cancelled' || next === 'failed' || next === 'delayed'
                     ? 'text-app-danger hover:bg-app-danger/10'
                     : 'text-app-accent hover:bg-app-accent/10'

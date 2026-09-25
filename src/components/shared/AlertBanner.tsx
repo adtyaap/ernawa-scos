@@ -20,9 +20,16 @@ export function AlertBanner({
   children?: ReactNode;
 }) {
   const { icon: Icon, classes } = variantConfig[variant];
+  // danger/warning butuh pengumuman segera (assertive) krn biasanya blocking
+  // error; success/info cukup polite supaya tidak menyela screen reader.
+  const isUrgent = variant === 'danger' || variant === 'warning';
 
   return (
-    <div className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${classes}`}>
+    <div
+      role={isUrgent ? 'alert' : 'status'}
+      aria-live={isUrgent ? 'assertive' : 'polite'}
+      className={`flex items-start gap-3 rounded-lg border px-4 py-3 text-sm ${classes}`}
+    >
       <Icon size={18} className="mt-0.5 shrink-0" />
       <div>
         <p className="font-medium">{title}</p>

@@ -267,7 +267,7 @@ export function DemandPage() {
                 <button
                   type="button"
                   onClick={() => startEdit(row.id)}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   Edit
                 </button>

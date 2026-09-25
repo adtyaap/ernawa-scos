@@ -401,7 +401,7 @@ function PendingHandoverCard({ handover, onConfirmed }: { handover: PendingHando
                 setCancelReason('');
                 setFeedback(null);
               }}
-              className="rounded px-2 py-1 text-xs font-medium text-app-danger hover:bg-app-danger/10"
+              className="rounded px-3 py-2 text-xs font-medium text-app-danger hover:bg-app-danger/10"
             >
               Batalkan
             </button>

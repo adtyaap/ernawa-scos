@@ -250,6 +250,7 @@ export function TerimaCepatPage() {
                   onClick={() => handleDeleteFavorite(fav.id)}
                   className="rounded-full p-1 text-app-muted hover:bg-app-soft-strong hover:text-app-danger"
                   title="Hapus favorit"
+                  aria-label={`Hapus favorit ${fav.label}`}
                 >
                   <X size={12} />
                 </button>
@@ -361,6 +362,8 @@ export function TerimaCepatPage() {
                 type="button"
                 onClick={() => removeLotRow(lot.key)}
                 disabled={lots.length === 1}
+                title="Hapus baris produk"
+                aria-label="Hapus baris produk"
                 className="flex items-center justify-center rounded-md border border-app-border p-2 text-app-danger hover:bg-app-danger/10 disabled:opacity-30"
               >
                 <Trash2 size={16} />

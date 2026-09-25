@@ -244,7 +244,7 @@ export function RiwayatDeliveryPage() {
                       setCancelReason('');
                       setFeedback(null);
                     }}
-                    className="rounded px-2 py-1 text-xs font-medium text-app-danger hover:bg-app-danger/10"
+                    className="rounded px-3 py-2 text-xs font-medium text-app-danger hover:bg-app-danger/10"
                   >
                     Batalkan
                   </button>
@@ -264,14 +264,14 @@ export function RiwayatDeliveryPage() {
                       type="button"
                       onClick={() => handleCancel(row)}
                       disabled={!cancelReason.trim() || cancelSubmitting}
-                      className="rounded bg-app-danger px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                      className="rounded bg-app-danger px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       {cancelSubmitting ? 'Membatalkan...' : 'Konfirmasi Batal'}
                     </button>
                     <button
                       type="button"
                       onClick={() => setCancelingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
+                      className="rounded border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>

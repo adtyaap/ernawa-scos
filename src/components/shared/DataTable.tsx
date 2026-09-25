@@ -79,7 +79,7 @@ export function DataTable<T>({
                       <button
                         type="button"
                         onClick={() => onEdit(row)}
-                        className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                        className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                       >
                         Edit
                       </button>
@@ -88,7 +88,7 @@ export function DataTable<T>({
                       <button
                         type="button"
                         onClick={() => onDelete(row)}
-                        className="rounded px-2 py-1 text-xs font-medium text-app-danger hover:bg-app-danger/10"
+                        className="rounded px-3 py-2 text-xs font-medium text-app-danger hover:bg-app-danger/10"
                       >
                         Hapus
                       </button>

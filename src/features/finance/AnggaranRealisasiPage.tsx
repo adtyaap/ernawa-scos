@@ -169,7 +169,7 @@ export function AnggaranRealisasiPage() {
                     setEditValue(budget !== null ? String(budget) : '');
                     setFeedback(null);
                   }}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   {budget !== null ? 'Ubah Target' : 'Set Target'}
                 </button>

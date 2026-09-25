@@ -271,7 +271,7 @@ export function KasBankPerusahaanPage() {
                       setReversalReason('');
                       setFeedback(null);
                     }}
-                    className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                    className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                   >
                     Koreksi
                   </button>
@@ -291,14 +291,14 @@ export function KasBankPerusahaanPage() {
                       type="button"
                       onClick={() => handleReverse(row)}
                       disabled={!reversalReason.trim() || submitting}
-                      className="rounded bg-app-accent hover:bg-app-accent-hover px-2 py-1 text-xs font-semibold text-white disabled:opacity-40"
+                      className="rounded bg-app-accent hover:bg-app-accent-hover px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Konfirmasi
                     </button>
                     <button
                       type="button"
                       onClick={() => setReversingId(null)}
-                      className="rounded border border-app-border px-2 py-1 text-xs text-app-muted hover:bg-app-soft"
+                      className="rounded border border-app-border px-3 py-2 text-xs text-app-muted hover:bg-app-soft"
                     >
                       Tutup
                     </button>

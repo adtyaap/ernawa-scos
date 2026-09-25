@@ -144,7 +144,7 @@ export function UtangPemasokPage() {
                   type="button"
                   onClick={() => handleMarkPaid(r)}
                   disabled={markingId !== null}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-success hover:bg-app-success/10 disabled:opacity-40"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-success hover:bg-app-success/10 disabled:opacity-40"
                 >
                   {markingId === r.receiving_transaction_id ? 'Menyimpan...' : 'Tandai Lunas'}
                 </button>
