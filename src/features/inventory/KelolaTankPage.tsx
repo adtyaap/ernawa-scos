@@ -23,12 +23,16 @@ interface TankRow {
 // ada, satu-satunya cara menambah tank adalah insert manual lewat SQL.
 //
 // Owner-only untuk tambah/ubah (tanks_insert/tanks_update RLS, sudah ada
-// sejak migration awal -- tidak perlu migration baru). Tidak ada policy
-// DELETE dan tidak ada kolom status di tabel ini, jadi tidak ada aksi
-// hapus/nonaktifkan -- tank yang sudah dibuat bersifat permanen (bisa
-// diganti nama lewat Edit, tidak bisa dihapus). Semua role dengan akses ke
-// site terkait tetap bisa MELIHAT daftar tank (tanks_select), cuma
-// tambah/ubah yang owner-only.
+// sejak migration awal -- tidak perlu migration baru). Semua role dengan
+// akses ke site terkait tetap bisa MELIHAT daftar tank (tanks_select), cuma
+// tambah/ubah/hapus yang owner-only.
+//
+// Hapus (migration 0053, tanks_delete, owner-only): tank yang SUDAH PERNAH
+// dipakai (ada baris batches yang mereferensikannya) TIDAK BISA dihapus --
+// FK batches.tank_id -> tanks(id) default RESTRICT (tanpa "on delete
+// cascade") menolak delete-nya di level database, jadi tidak perlu guard
+// tambahan di sini. Cuma tank yang benar-benar belum pernah dipakai
+// (mis. tank uji yang salah dibuat) yang bisa dihapus.
 export function KelolaTankPage() {
   const { profile } = useAuth();
   const isOwner = profile?.role === 'owner';
@@ -43,6 +47,8 @@ export function KelolaTankPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [formFeedback, setFormFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [tableFeedback, setTableFeedback] = useState<{ variant: AlertVariant; message: string } | null>(null);
 
   async function loadTanks() {
     setLoading(true);
@@ -88,6 +94,32 @@ export function KelolaTankPage() {
     setFormFeedback(null);
   }
 
+  async function handleDelete(tank: TankRow) {
+    if (deletingId) return;
+    if (!window.confirm(`Hapus tank "${tank.name}"? Tindakan ini tidak bisa dibatalkan.`)) return;
+
+    setDeletingId(tank.id);
+    setTableFeedback(null);
+
+    const { error } = await supabase.from('tanks').delete().eq('id', tank.id);
+
+    if (error) {
+      setTableFeedback({
+        variant: 'danger',
+        message:
+          error.code === '23503'
+            ? `Tank "${tank.name}" tidak bisa dihapus karena sudah punya riwayat penerimaan/batch.`
+            : error.message,
+      });
+      setDeletingId(null);
+      return;
+    }
+
+    setTableFeedback({ variant: 'success', message: `Tank "${tank.name}" berhasil dihapus.` });
+    setDeletingId(null);
+    await loadTanks();
+  }
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     const trimmedName = formName.trim();
@@ -127,13 +159,21 @@ export function KelolaTankPage() {
             key: 'aksi',
             header: 'Aksi',
             render: (row: TankRow) => (
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => startEdit(row)}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   Edit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleDelete(row)}
+                  disabled={deletingId === row.id}
+                  className="rounded px-3 py-2 text-xs font-medium text-app-danger hover:bg-app-danger/10 disabled:opacity-40"
+                >
+                  {deletingId === row.id ? 'Menghapus...' : 'Hapus'}
                 </button>
               </div>
             ),
@@ -221,6 +261,15 @@ export function KelolaTankPage() {
       {loadError && (
         <AlertBanner variant="danger" title="Gagal memuat daftar tank">
           {loadError}
+        </AlertBanner>
+      )}
+
+      {tableFeedback && (
+        <AlertBanner
+          variant={tableFeedback.variant}
+          title={tableFeedback.variant === 'success' ? 'Berhasil' : 'Gagal menghapus'}
+        >
+          {tableFeedback.message}
         </AlertBanner>
       )}
 

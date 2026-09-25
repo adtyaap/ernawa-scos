@@ -3,6 +3,7 @@ import { Plus } from 'lucide-react';
 import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { DataTable, type DataTableColumn } from '../../components/shared/DataTable';
+import { StatusBadge } from '../../components/shared/StatusBadge';
 import { AlertBanner, type AlertVariant } from '../../components/shared/AlertBanner';
 import type { Supplier } from '../../types/domain';
 
@@ -153,6 +154,11 @@ export function SourcePage() {
 
   const columns: DataTableColumn<Supplier>[] = [
     { key: 'name', header: 'Nama Supplier' },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <StatusBadge label={row.status === 'aktif' ? 'Aktif' : 'Nonaktif'} tone={row.status === 'aktif' ? 'success' : 'neutral'} />,
+    },
     { key: 'contact_person', header: 'Kontak', render: (row) => row.contact_person ?? '-' },
     { key: 'phone', header: 'Telepon', render: (row) => row.phone ?? '-' },
     {
@@ -176,7 +182,7 @@ export function SourcePage() {
                 <button
                   type="button"
                   onClick={() => startEdit(row)}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   Edit
                 </button>
@@ -184,7 +190,7 @@ export function SourcePage() {
                   type="button"
                   onClick={() => handleToggleStatus(row)}
                   disabled={togglingId === row.id}
-                  className={`rounded px-2 py-1 text-xs font-medium hover:bg-app-soft disabled:opacity-40 ${
+                  className={`rounded px-3 py-2 text-xs font-medium hover:bg-app-soft disabled:opacity-40 ${
                     row.status === 'aktif' ? 'text-app-danger' : 'text-app-success'
                   }`}
                 >
@@ -318,10 +324,6 @@ export function SourcePage() {
         rows={suppliers}
         getRowId={(row) => row.id}
         emptyLabel={loading ? 'Memuat...' : 'Belum ada supplier.'}
-        status={{
-          getLabel: (row) => (row.status === 'aktif' ? 'Aktif' : 'Nonaktif'),
-          getTone: (row) => (row.status === 'aktif' ? 'success' : 'neutral'),
-        }}
       />
     </div>
   );

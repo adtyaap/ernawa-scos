@@ -412,7 +412,8 @@ function HomeDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 9 kartu -> 3 kolom (3 baris genap), bukan 4 (sisa 1 kartu sendirian di baris terakhir). Pola sama dgn FinancePage. */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <KPICard
             icon={RefreshCw}
             label="Cash Conversion Cycle"

@@ -24,6 +24,7 @@ export function KelolaProdukPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
 
   const [formName, setFormName] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export function KelolaProdukPage() {
                 <button
                   type="button"
                   onClick={() => startEdit(row)}
-                  className="rounded px-2 py-1 text-xs font-medium text-app-accent hover:bg-app-accent/10"
+                  className="rounded px-3 py-2 text-xs font-medium text-app-accent hover:bg-app-accent/10"
                 >
                   Edit
                 </button>
@@ -113,6 +114,8 @@ export function KelolaProdukPage() {
         ]
       : []),
   ];
+
+  const visibleProducts = products.filter((p) => p.name.toLowerCase().includes(search.trim().toLowerCase()));
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -178,11 +181,22 @@ export function KelolaProdukPage() {
         </AlertBanner>
       )}
 
+      <label className="block max-w-sm space-y-1">
+        <span className="text-xs font-medium text-app-muted">Cari produk</span>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className={inputClass}
+          placeholder="Mis. BAMBU 200-300"
+        />
+      </label>
+
       <DataTable
         columns={columns}
-        rows={products}
+        rows={visibleProducts}
         getRowId={(row) => row.id}
-        emptyLabel={loading ? 'Memuat...' : 'Belum ada produk.'}
+        emptyLabel={loading ? 'Memuat...' : search ? 'Tidak ada produk yang cocok.' : 'Belum ada produk.'}
       />
     </div>
   );
