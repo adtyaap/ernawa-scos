@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 import { AlertBanner } from '../../components/shared/AlertBanner';
 import { KPICard } from '../../components/shared/KPICard';
+import { FinanceOverviewPanel } from './FinanceOverviewPanel';
 import { formatCurrency, formatNumber, todayLocalDate } from '../../lib/format';
 import { downloadCsv } from '../../lib/exportCsv';
 import type {
@@ -48,6 +49,7 @@ function formatDays(value: number): string {
 export function FinancePage() {
   const { profile, profileLoading } = useAuth();
   const isInvestor = profile?.role === 'investor';
+  const isOwner = profile?.role === 'owner';
 
   const [marginRows, setMarginRows] = useState<TradingDeliveryMargin[]>([]);
   const [lockupRows, setLockupRows] = useState<TradingCapitalLockup[]>([]);
@@ -314,7 +316,11 @@ export function FinancePage() {
             icon={RefreshCw}
             label="Cash Conversion Cycle"
             value={ccc !== null ? formatDays(ccc) : 'Belum ada data'}
-            note="Inventory Days + Hari Piutang − DPO"
+            note={
+              ccc !== null && ccc > 0
+                ? `Inventory Days + Hari Piutang − DPO · modal berputar ${formatNumber(Math.round((30 / ccc) * 100) / 100)}×/bulan`
+                : 'Inventory Days + Hari Piutang − DPO'
+            }
           />
         </div>
 
@@ -423,6 +429,10 @@ export function FinancePage() {
             </div>
           </div>
         </div>
+
+        {(isOwner || isInvestor) && !profileLoading && (
+          <FinanceOverviewPanel isInvestor={isInvestor} ccc={ccc} arTotal={arBuckets.total} />
+        )}
 
         <div className="flex flex-wrap gap-2">
           <button

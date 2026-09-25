@@ -551,6 +551,13 @@ export type Database = {
             referencedRelation: "v_trading_delivery_margin"
             referencedColumns: ["delivery_id"]
           },
+          {
+            foreignKeyName: "delivery_allocations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_delivery_pnl"
+            referencedColumns: ["delivery_id"]
+          },
         ]
       }
       demands: {
@@ -1218,6 +1225,13 @@ export type Database = {
             referencedRelation: "receiving_transactions"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "receiving_lots_receiving_transaction_id_fkey"
+            columns: ["receiving_transaction_id"]
+            isOneToOne: false
+            referencedRelation: "v_supplier_payables"
+            referencedColumns: ["receiving_transaction_id"]
+          },
         ]
       }
       receiving_transactions: {
@@ -1228,6 +1242,8 @@ export type Database = {
           site_id: string
           source_handover_id: string | null
           supplier_id: string | null
+          supplier_paid_at: string | null
+          supplier_paid_by: string | null
           transaction_date: string
         }
         Insert: {
@@ -1237,6 +1253,8 @@ export type Database = {
           site_id: string
           source_handover_id?: string | null
           supplier_id?: string | null
+          supplier_paid_at?: string | null
+          supplier_paid_by?: string | null
           transaction_date: string
         }
         Update: {
@@ -1246,6 +1264,8 @@ export type Database = {
           site_id?: string
           source_handover_id?: string | null
           supplier_id?: string | null
+          supplier_paid_at?: string | null
+          supplier_paid_by?: string | null
           transaction_date?: string
         }
         Relationships: [
@@ -1275,6 +1295,13 @@ export type Database = {
             columns: ["supplier_id"]
             isOneToOne: false
             referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_transactions_supplier_paid_by_fkey"
+            columns: ["supplier_paid_by"]
+            isOneToOne: false
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1343,6 +1370,109 @@ export type Database = {
             columns: ["delivery_id"]
             isOneToOne: true
             referencedRelation: "v_trading_delivery_margin"
+            referencedColumns: ["delivery_id"]
+          },
+          {
+            foreignKeyName: "settlements_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: true
+            referencedRelation: "v_trading_delivery_pnl"
+            referencedColumns: ["delivery_id"]
+          },
+        ]
+      }
+      shipments: {
+        Row: {
+          cancel_reason: string | null
+          carrier: string | null
+          cost: number
+          created_at: string
+          created_by: string | null
+          delivery_id: string
+          departed_on: string
+          destination: string | null
+          eta_on: string | null
+          id: string
+          origin: string | null
+          qty_kg: number
+          shipment_no: string
+          status: string
+          status_changed_at: string
+          transit_mortality_kg: number
+          vehicle: string | null
+        }
+        Insert: {
+          cancel_reason?: string | null
+          carrier?: string | null
+          cost?: number
+          created_at?: string
+          created_by?: string | null
+          delivery_id: string
+          departed_on: string
+          destination?: string | null
+          eta_on?: string | null
+          id?: string
+          origin?: string | null
+          qty_kg: number
+          shipment_no?: string
+          status?: string
+          status_changed_at?: string
+          transit_mortality_kg?: number
+          vehicle?: string | null
+        }
+        Update: {
+          cancel_reason?: string | null
+          carrier?: string | null
+          cost?: number
+          created_at?: string
+          created_by?: string | null
+          delivery_id?: string
+          departed_on?: string
+          destination?: string | null
+          eta_on?: string | null
+          id?: string
+          origin?: string | null
+          qty_kg?: number
+          shipment_no?: string
+          status?: string
+          status_changed_at?: string
+          transit_mortality_kg?: number
+          vehicle?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shipments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "deliveries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "shipments_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_deliveries_pending_settlement"
+            referencedColumns: ["delivery_id"]
+          },
+          {
+            foreignKeyName: "shipments_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_delivery_margin"
+            referencedColumns: ["delivery_id"]
+          },
+          {
+            foreignKeyName: "shipments_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_delivery_pnl"
             referencedColumns: ["delivery_id"]
           },
         ]
@@ -1792,6 +1922,13 @@ export type Database = {
             referencedRelation: "v_trading_delivery_margin"
             referencedColumns: ["delivery_id"]
           },
+          {
+            foreignKeyName: "delivery_allocations_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: false
+            referencedRelation: "v_trading_delivery_pnl"
+            referencedColumns: ["delivery_id"]
+          },
         ]
       }
       v_demands_with_fulfillment: {
@@ -1927,6 +2064,53 @@ export type Database = {
             referencedRelation: "v_trading_delivery_margin"
             referencedColumns: ["delivery_id"]
           },
+          {
+            foreignKeyName: "settlements_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: true
+            referencedRelation: "v_trading_delivery_pnl"
+            referencedColumns: ["delivery_id"]
+          },
+        ]
+      }
+      v_supplier_payables: {
+        Row: {
+          amount: number | null
+          days_until_due: number | null
+          due_date: string | null
+          payment_term_days: number | null
+          receiving_transaction_id: string | null
+          site_id: string | null
+          site_name: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          supplier_paid_at: string | null
+          supplier_paid_by: string | null
+          track: string | null
+          transaction_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receiving_transactions_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_transactions_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "receiving_transactions_supplier_paid_by_fkey"
+            columns: ["supplier_paid_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
         ]
       }
       v_trading_capital_lockup: {
@@ -1964,6 +2148,44 @@ export type Database = {
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      v_trading_delivery_pnl: {
+        Row: {
+          actual_weight_kg: number | null
+          cogs: number | null
+          customer_id: string | null
+          customer_name: string | null
+          delivered_at: string | null
+          delivery_id: string | null
+          gross_profit: number | null
+          logistics_cost: number | null
+          n_products: number | null
+          n_suppliers: number | null
+          revenue: number | null
+          segment: string | null
+          site_id: string | null
+          site_name: string | null
+          sole_product_id: string | null
+          sole_product_name: string | null
+          sole_supplier_id: string | null
+          sole_supplier_name: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "deliveries_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "settlements_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
             referencedColumns: ["id"]
           },
         ]
@@ -2010,6 +2232,13 @@ export type Database = {
         }
         Relationships: []
       }
+      v_trading_mortality_cost: {
+        Row: {
+          mortality_cost: number | null
+          mortality_kg: number | null
+        }
+        Relationships: []
+      }
       v_trading_receivable_cycle: {
         Row: {
           created_at: string | null
@@ -2039,6 +2268,13 @@ export type Database = {
             columns: ["delivery_id"]
             isOneToOne: true
             referencedRelation: "v_trading_delivery_margin"
+            referencedColumns: ["delivery_id"]
+          },
+          {
+            foreignKeyName: "settlements_delivery_id_fkey"
+            columns: ["delivery_id"]
+            isOneToOne: true
+            referencedRelation: "v_trading_delivery_pnl"
             referencedColumns: ["delivery_id"]
           },
         ]
@@ -2166,6 +2402,33 @@ export type Database = {
           track: string
         }[]
       }
+      get_live_inventory: {
+        Args: never
+        Returns: {
+          age_hours: number
+          balance_kg: number
+          batch_line_id: string
+          buy_price_per_kg: number
+          correction_kg: number
+          delivered_kg: number
+          from_handover: boolean
+          in_kg: number
+          is_overdue: boolean
+          max_holding_hours: number
+          mortality_kg: number
+          product_id: string
+          product_name: string
+          received_at: string
+          shrink_kg: number
+          site_id: string
+          site_name: string
+          stock_value: number
+          supplier_name: string
+          tank_name: string
+          track: string
+          transfer_out_kg: number
+        }[]
+      }
       get_mortality_rates: {
         Args: { p_days?: number }
         Returns: {
@@ -2198,6 +2461,21 @@ export type Database = {
           product_id: string
           product_name: string
           total_received_kg: number
+        }[]
+      }
+      get_trading_finance_summary: {
+        Args: never
+        Returns: {
+          ap_current: number
+          ap_d1_30: number
+          ap_d31_60: number
+          ap_d60_plus: number
+          ap_outstanding: number
+          ap_unclassified_amount: number
+          ap_unclassified_count: number
+          inventory_kg: number
+          inventory_value: number
+          opex_total: number
         }[]
       }
       investor_company_cash_ledger: {
@@ -2273,6 +2551,30 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      investor_supplier_payables: {
+        Args: never
+        Returns: {
+          amount: number | null
+          days_until_due: number | null
+          due_date: string | null
+          payment_term_days: number | null
+          receiving_transaction_id: string | null
+          site_id: string | null
+          site_name: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          supplier_paid_at: string | null
+          supplier_paid_by: string | null
+          track: string | null
+          transaction_date: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_supplier_payables"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       investor_trading_capital_lockup: {
         Args: never
         Returns: {
@@ -2304,6 +2606,35 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "v_trading_delivery_margin"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_delivery_pnl: {
+        Args: never
+        Returns: {
+          actual_weight_kg: number | null
+          cogs: number | null
+          customer_id: string | null
+          customer_name: string | null
+          delivered_at: string | null
+          delivery_id: string | null
+          gross_profit: number | null
+          logistics_cost: number | null
+          n_products: number | null
+          n_suppliers: number | null
+          revenue: number | null
+          segment: string | null
+          site_id: string | null
+          site_name: string | null
+          sole_product_id: string | null
+          sole_product_name: string | null
+          sole_supplier_id: string | null
+          sole_supplier_name: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_delivery_pnl"
           isOneToOne: false
           isSetofReturn: true
         }
@@ -2370,6 +2701,19 @@ export type Database = {
         SetofOptions: {
           from: "*"
           to: "v_trading_margin_mixed_summary"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      investor_trading_mortality_cost: {
+        Args: never
+        Returns: {
+          mortality_cost: number | null
+          mortality_kg: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "v_trading_mortality_cost"
           isOneToOne: false
           isSetofReturn: true
         }

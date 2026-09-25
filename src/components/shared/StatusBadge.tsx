@@ -10,7 +10,7 @@ const toneClasses: Record<BadgeTone, string> = {
 
 export function StatusBadge({ label, tone }: { label: string; tone: BadgeTone }) {
   return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${toneClasses[tone]}`}>
+    <span className={`inline-flex items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium ${toneClasses[tone]}`}>
       {label}
     </span>
   );

@@ -237,3 +237,113 @@ export interface MortalityRateRow {
   threshold_pct: number | null;
   is_overdue: boolean;
 }
+
+// Hasil fungsi get_live_inventory() — migration 0050. Satu baris per
+// batch_line bersaldo > 0. Persamaan: in - delivered - mortality - shrink
+// - transfer_out + correction = balance (correction = baris reversal).
+export interface LiveInventoryRow {
+  batch_line_id: string;
+  site_id: string;
+  site_name: string;
+  track: string;
+  tank_name: string;
+  product_id: string;
+  product_name: string;
+  supplier_name: string | null;
+  from_handover: boolean;
+  received_at: string | null;
+  age_hours: number | null;
+  max_holding_hours: number | null;
+  is_overdue: boolean;
+  in_kg: number;
+  delivered_kg: number;
+  mortality_kg: number;
+  shrink_kg: number;
+  transfer_out_kg: number;
+  correction_kg: number;
+  balance_kg: number;
+  buy_price_per_kg: number;
+  stock_value: number;
+}
+
+export type ShipmentStatus = 'planned' | 'ready' | 'in_transit' | 'delivered' | 'delayed' | 'failed' | 'cancelled';
+
+// Baris tabel shipments — migration 0048.
+export interface Shipment {
+  id: string;
+  shipment_no: string;
+  delivery_id: string;
+  origin: string | null;
+  destination: string | null;
+  carrier: string | null;
+  vehicle: string | null;
+  departed_on: string;
+  eta_on: string | null;
+  qty_kg: number;
+  cost: number;
+  transit_mortality_kg: number;
+  status: ShipmentStatus;
+  status_changed_at: string;
+  cancel_reason: string | null;
+  created_at: string;
+}
+
+// Hasil view v_trading_delivery_pnl — migration 0048. sole_* NULL untuk
+// delivery campuran (>1 produk / >1 pemasok) — tidak dipecah.
+export interface TradingDeliveryPnl {
+  delivery_id: string;
+  site_id: string;
+  site_name: string;
+  customer_id: string;
+  customer_name: string;
+  segment: string;
+  delivered_at: string | null;
+  actual_weight_kg: number | null;
+  revenue: number;
+  cogs: number;
+  logistics_cost: number;
+  gross_profit: number;
+  n_products: number;
+  sole_product_id: string | null;
+  sole_product_name: string | null;
+  n_suppliers: number;
+  sole_supplier_id: string | null;
+  sole_supplier_name: string | null;
+}
+
+// Hasil view v_supplier_payables — migration 0049.
+export interface SupplierPayableRow {
+  receiving_transaction_id: string;
+  site_id: string;
+  site_name: string;
+  track: string;
+  supplier_id: string;
+  supplier_name: string;
+  payment_term_days: number | null;
+  transaction_date: string;
+  due_date: string | null;
+  days_until_due: number | null;
+  amount: number;
+  supplier_paid_at: string | null;
+  supplier_paid_by: string | null;
+}
+
+// Hasil fungsi get_trading_finance_summary() — migration 0050, Owner &
+// Investor saja (role lain: tidak ada baris).
+export interface TradingFinanceSummary {
+  inventory_kg: number;
+  inventory_value: number;
+  opex_total: number;
+  ap_outstanding: number;
+  ap_current: number;
+  ap_d1_30: number;
+  ap_d31_60: number;
+  ap_d60_plus: number;
+  ap_unclassified_amount: number;
+  ap_unclassified_count: number;
+}
+
+export interface TradingMortalityCost {
+  mortality_kg: number;
+  mortality_cost: number;
+}

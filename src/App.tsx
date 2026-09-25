@@ -24,6 +24,7 @@ const ImportTerimaCepatPage = lazyPage(() => import('./features/inventory/Import
 const HandoverPage = lazyPage(() => import('./features/inventory/HandoverPage'), 'HandoverPage');
 const KelolaTankPage = lazyPage(() => import('./features/inventory/KelolaTankPage'), 'KelolaTankPage');
 const FefoRiskReportPage = lazyPage(() => import('./features/inventory/FefoRiskReportPage'), 'FefoRiskReportPage');
+const LiveInventoryPage = lazyPage(() => import('./features/inventory/LiveInventoryPage'), 'LiveInventoryPage');
 const StokMortalitasPage = lazyPage(() => import('./features/inventory/StokMortalitasPage'), 'StokMortalitasPage');
 const InspeksiKualitasPage = lazyPage(() => import('./features/inventory/InspeksiKualitasPage'), 'InspeksiKualitasPage');
 const RiwayatPenerimaanPage = lazyPage(() => import('./features/inventory/RiwayatPenerimaanPage'), 'RiwayatPenerimaanPage');
@@ -33,9 +34,12 @@ const RiwayatDeliveryPage = lazyPage(() => import('./features/deliver/RiwayatDel
 const CustomerPage = lazyPage(() => import('./features/customers/CustomerPage'), 'CustomerPage');
 const DemandPage = lazyPage(() => import('./features/demands/DemandPage'), 'DemandPage');
 const AlokasiKirimPage = lazyPage(() => import('./features/deliver/AlokasiKirimPage'), 'AlokasiKirimPage');
+const LogisticsPage = lazyPage(() => import('./features/deliver/LogisticsPage'), 'LogisticsPage');
 const KonfirmasiTimbangPage = lazyPage(() => import('./features/deliver/KonfirmasiTimbangPage'), 'KonfirmasiTimbangPage');
 const SettlementPage = lazyPage(() => import('./features/deliver/SettlementPage'), 'SettlementPage');
 const FinancePage = lazyPage(() => import('./features/finance/FinancePage'), 'FinancePage');
+const ProfitabilityPage = lazyPage(() => import('./features/finance/ProfitabilityPage'), 'ProfitabilityPage');
+const UtangPemasokPage = lazyPage(() => import('./features/finance/UtangPemasokPage'), 'UtangPemasokPage');
 const PiutangPage = lazyPage(() => import('./features/finance/PiutangPage'), 'PiutangPage');
 const KasPanjarPage = lazyPage(() => import('./features/finance/KasPanjarPage'), 'KasPanjarPage');
 const RekonsiliasiKasPage = lazyPage(() => import('./features/finance/RekonsiliasiKasPage'), 'RekonsiliasiKasPage');
@@ -65,6 +69,7 @@ export default function App() {
               <Route path="/inventory/handover" element={<HandoverPage />} />
               <Route path="/inventory/tank" element={<KelolaTankPage />} />
               <Route path="/inventory/risiko-fefo" element={<FefoRiskReportPage />} />
+              <Route path="/inventory/live" element={<LiveInventoryPage />} />
               <Route path="/inventory/stok" element={<StokMortalitasPage />} />
               <Route path="/inventory/inspeksi-kualitas" element={<InspeksiKualitasPage />} />
               <Route path="/inventory/riwayat" element={<RiwayatPenerimaanPage />} />
@@ -74,9 +79,12 @@ export default function App() {
               <Route path="/deliver/customer" element={<CustomerPage />} />
               <Route path="/deliver/demand-baru" element={<DemandPage />} />
               <Route path="/deliver/alokasi-kirim" element={<AlokasiKirimPage />} />
+              <Route path="/deliver/logistics" element={<LogisticsPage />} />
               <Route path="/deliver/konfirmasi-timbang" element={<KonfirmasiTimbangPage />} />
               <Route path="/deliver/settlement" element={<SettlementPage />} />
               <Route path="/finance" element={<FinancePage />} />
+              <Route path="/finance/profitability" element={<ProfitabilityPage />} />
+              <Route path="/finance/utang-pemasok" element={<UtangPemasokPage />} />
               <Route path="/finance/piutang" element={<PiutangPage />} />
               <Route path="/finance/kas-panjar" element={<KasPanjarPage />} />
               <Route path="/finance/rekonsiliasi-kas" element={<RekonsiliasiKasPage />} />
