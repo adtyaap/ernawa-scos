@@ -15,9 +15,12 @@ export default {
         display: ['Plus Jakarta Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],
       },
-      // Sudut kontrol (input/tombol) lebih tegas spt Fiori; kartu tetap 8px.
+      // Skala sudut mengikuti style guide Stitch "Marine Modern Corporate":
+      // kontrol (tombol/input/badge) 8px, kartu/panel 16px -- lebih bulat
+      // drpd Fiori sebelumnya (4px/8px).
       borderRadius: {
-        md: '0.25rem',
+        md: '0.5rem',
+        lg: '1rem',
       },
       colors: {
         app: {

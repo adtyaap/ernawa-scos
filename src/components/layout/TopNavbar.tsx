@@ -20,8 +20,9 @@ function initials(name: string): string {
     .join('');
 }
 
-// Header dua baris mengikuti desain Stitch (gaya Fiori Horizon): baris atas
-// logo + pencarian + status & profil, baris bawah tab modul bergaris bawah.
+// Header satu baris mengikuti proyek Stitch "Web ERP System Design": logo +
+// pencarian + tab modul (gaya pill, lihat TabMenu) + status & profil semua
+// dlm satu baris h-16 -- sebelumnya dua baris terpisah (tab di baris bawah).
 export function TopNavbar() {
   const { profile, profileLoading } = useAuth();
   const [online, setOnline] = useState(navigator.onLine);
@@ -39,18 +40,18 @@ export function TopNavbar() {
 
   return (
     <header className="z-10 shrink-0 bg-app-panel shadow-[0_1px_8px_rgba(0,0,0,0.06)]">
-      <div className="flex h-14 items-center justify-between gap-4 px-6">
+      <div className="flex h-16 items-center gap-4 px-6">
         <div className="flex shrink-0 items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-app-accent text-white">
             <Waves size={18} />
           </div>
-          <div className="flex items-baseline gap-1.5">
+          <div className="hidden items-baseline gap-1.5 xl:flex">
             <span className="text-base font-bold tracking-tight text-app-text">Lobster SC.OS</span>
             <span className="text-sm font-medium text-app-accent">Ernawa</span>
           </div>
         </div>
 
-        <div className="hidden max-w-2xl flex-1 px-3 md:block">
+        <div className="hidden w-56 shrink-0 lg:block">
           <label htmlFor="topnav-search" className="sr-only">
             Cari
           </label>
@@ -63,6 +64,10 @@ export function TopNavbar() {
               className="w-full rounded-md bg-app-soft py-1.5 pl-9 pr-3 text-xs text-app-text placeholder:text-app-muted focus:bg-app-panel focus:outline-none focus:ring-2 focus:ring-app-accent"
             />
           </div>
+        </div>
+
+        <div className="min-w-0 flex-1 overflow-x-auto">
+          <TabMenu />
         </div>
 
         <div className="flex shrink-0 items-center gap-3">
@@ -100,10 +105,6 @@ export function TopNavbar() {
             <span className="text-xs text-app-muted">Belum login</span>
           )}
         </div>
-      </div>
-
-      <div className="flex h-12 items-center px-6 shadow-[inset_0_1px_0_rgba(193,198,215,0.3)]">
-        <TabMenu />
       </div>
     </header>
   );
